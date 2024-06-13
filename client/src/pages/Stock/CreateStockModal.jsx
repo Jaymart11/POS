@@ -50,6 +50,9 @@ const CreateStockModal = ({ visible, onCancel }) => {
             rules={[{ required: true, message: "Please select a action!" }]}
           >
             <Select
+              onChange={() => {
+                form.setFieldValue("quantity", undefined);
+              }}
               options={[
                 { value: "restock", label: "Restock" },
                 { value: "damaged", label: "Damaged" },
@@ -139,7 +142,8 @@ const CreateStockModal = ({ visible, onCancel }) => {
                         : packData.filter(
                             ({ id }) => id === getFieldValue("packaging_id")
                           )[0].quantity;
-                      return parseInt(value) > maxVal
+                      return parseInt(value) > maxVal &&
+                        getFieldValue("type") !== "restock"
                         ? Promise.reject(
                             new Error(`The quantity cannot exceed ${maxVal}!`)
                           )
