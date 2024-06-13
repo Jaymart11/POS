@@ -6,7 +6,9 @@ class ProductModel {
   getAllProducts(categoryId, callback) {
     let query = "SELECT * FROM product";
     if (categoryId) {
-      query += " WHERE category_id = ?";
+      query += " WHERE category_id = ? AND deleted_by IS NULL";
+    } else {
+      query += " WHERE deleted_by IS NULL";
     }
     db.query(query, [categoryId], callback);
   }

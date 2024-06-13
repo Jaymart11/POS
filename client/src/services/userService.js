@@ -29,3 +29,8 @@ export const deleteUserData = async (id) => {
   const response = await apiClient.delete(`/users/${id}`);
   return response.data;
 };
+
+export const userLogin = async (data) => {
+  const response = await apiClient.post(`/users/login`, data);
+  return response.data;
+};

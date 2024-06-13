@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
-import {
-  useProductData,
-  useDeleteProductData,
-} from "../../hooks/useProductData";
+import { useProductData } from "../../hooks/useProductData";
+import { useUpdateProductData } from "../../hooks/useProductData";
 import { useCategoryData } from "../../hooks/useCategoryData";
-
 import CreateProductModal from "./CreateProductModal";
 import UpdateProductModal from "./UpdateProductModal";
+import RestockProductModal from "./RestockProductModal";
 import { Space, Table, Button, Popconfirm } from "antd";
 import useNotification from "../../hooks/useNotification";
+import { format } from "date-fns";
 
 const Product = () => {
   const openNotificationWithIcon = useNotification();
   const [currentCategory, setCurrentCategory] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const {
     data: productData,
@@ -20,10 +20,11 @@ const Product = () => {
     refetch,
   } = useProductData(currentCategory);
   const { data: categoryData, isLoading: categoryLoading } = useCategoryData();
-  const { mutate } = useDeleteProductData();
+  const { mutate } = useUpdateProductData();
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
+  const [isRestockModalVisible, setIsRestockModalVisible] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
 
   const showCreateModal = () => {
@@ -35,19 +36,39 @@ const Product = () => {
     setIsUpdateModalVisible(true);
   };
 
+  const showRestockModal = (product) => {
+    setCurrentProduct(product);
+    setIsRestockModalVisible(true);
+  };
+
   const handleCancel = () => {
     setIsCreateModalVisible(false);
     setIsUpdateModalVisible(false);
+    setIsRestockModalVisible(false);
     setCurrentProduct(null);
   };
 
   const confirmDelete = (id) => {
-    mutate(id);
-    openNotificationWithIcon(
-      "success",
-      "Product deletion",
-      "Product deleted successfully!"
-    );
+    try {
+      mutate({
+        id,
+        data: {
+          deleted_by: user.id,
+          deleted_at: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+        },
+      });
+      openNotificationWithIcon(
+        "success",
+        "Product deletion",
+        "Product deleted successfully!"
+      );
+    } catch (e) {
+      openNotificationWithIcon(
+        "error",
+        "Product deletion",
+        "Product deleted failed!"
+      );
+    }
   };
 
   useEffect(() => {
@@ -80,9 +101,13 @@ const Product = () => {
       key: "action",
       render: (_, record) => (
         <Space size="middle">
+          <Button type="primary" onClick={() => showRestockModal(record)}>
+            Restock/Damaged
+          </Button>
           <Button type="primary" onClick={() => showUpdateModal(record)}>
             Update
           </Button>
+
           <Popconfirm
             title="Delete the product"
             description="Are you sure to delete this product?"
@@ -106,6 +131,12 @@ const Product = () => {
       />
       <UpdateProductModal
         visible={isUpdateModalVisible}
+        onCancel={handleCancel}
+        setCurrentCategory={setCurrentCategory}
+        product={currentProduct}
+      />
+      <RestockProductModal
+        visible={isRestockModalVisible}
         onCancel={handleCancel}
         setCurrentCategory={setCurrentCategory}
         product={currentProduct}

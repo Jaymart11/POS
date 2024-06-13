@@ -46,7 +46,17 @@ exports.createProduct = (req, res) => {
 
 exports.updateProduct = (req, res) => {
   const productId = req.params.id;
-  const productData = req.body;
+  let productData = req.body;
+
+  if (productData.restock) {
+    productData = {
+      product_quantity:
+        productData.restock === "restock"
+          ? productData.product_quantity + parseInt(productData.quantity)
+          : productData.product_quantity - parseInt(productData.quantity),
+    };
+  }
+
   productModel.updateProduct(productId, productData, (err, result) => {
     if (err) {
       console.error(err);

@@ -6,17 +6,18 @@ import useNotification from "../../hooks/useNotification";
 
 const CreateProductModal = ({ visible, onCancel, setCurrentCategory }) => {
   const { mutate, isLoading } = useCreateProductData();
-  const { data: catData, isLoading: catLoading } = useCategoryData();
-  const { data: packData, isLoading: packLoading } = usePackagingData();
+  const { data: catData } = useCategoryData();
+  const { data: packData } = usePackagingData();
 
   const openNotificationWithIcon = useNotification();
   const [form] = Form.useForm();
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const handleOk = () => {
     form
       .validateFields()
       .then((values) => {
-        mutate({ ...values, created_by: 1 });
+        mutate({ ...values, created_by: user.id });
         openNotificationWithIcon(
           "success",
           "Product creation",

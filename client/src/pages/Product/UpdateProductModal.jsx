@@ -17,6 +17,7 @@ const CreateProductModal = ({
 
   const openNotificationWithIcon = useNotification();
   const [form] = Form.useForm();
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     if (product) {
@@ -28,7 +29,7 @@ const CreateProductModal = ({
     form
       .validateFields()
       .then((values) => {
-        mutate({ id: product.id, data: { ...values, updated_by: 1 } });
+        mutate({ id: product.id, data: { ...values, updated_by: user.id } });
         openNotificationWithIcon(
           "success",
           "Product creation",

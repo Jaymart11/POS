@@ -11,12 +11,34 @@ const categoryRoutes = require("./routes/categoryRoutes.js");
 const productRoutes = require("./routes/productRoutes.js");
 const orderRoutes = require("./routes/orderRoutes.js");
 const expenseRoutes = require("./routes/expenseRoutes.js");
-
-const db = require("./database");
+const stockRoutes = require("./routes/stockRoutes.js");
+const packagingScheduler = require("./schedulers/packagingScheduler.js");
+const productScheduler = require("./schedulers/productScheduler.js");
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
+
+// cron
+app.get("/log-quantities/start", (req, res) => {
+  packagingScheduler.logQuantities(true);
+  res.send("Start quantities logged manually.");
+});
+app.get("/log-quantities/end", (req, res) => {
+  packagingScheduler.logQuantities(false);
+  res.send("End quantities logged manually.");
+});
+
+app.get("/product-log-quantities/start", (req, res) => {
+  productScheduler.productLogQuantities(true);
+  res.send("Start quantities logged manually.");
+});
+app.get("/product-log-quantities/end", (req, res) => {
+  productScheduler.productLogQuantities(false);
+  res.send("End quantities logged manually.");
+});
+
+// Example home route
 
 // Routes
 app.use("/users", userRoutes);
@@ -26,8 +48,9 @@ app.use("/categories", categoryRoutes);
 app.use("/products", productRoutes);
 app.use("/orders", orderRoutes);
 app.use("/expense", expenseRoutes);
+app.use("/stock", stockRoutes);
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

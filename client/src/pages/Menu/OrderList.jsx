@@ -20,6 +20,7 @@ const OrderList = () => {
     setItemOrder,
   } = useContext(OrderItemContext);
   const { order, setOrder } = useContext(OrderContext);
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const columns = [
     {
@@ -35,20 +36,20 @@ const OrderList = () => {
         <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
           <Button
             type="primary"
-            shape="circle"
-            style={{ backgroundColor: "rgb(40,128,99)" }}
-            onClick={() => addItemToOrder({ product_id: product_id })}
-          >
-            <PlusOutlined />
-          </Button>
-          <p style={{ width: "20px", textAlign: "center" }}>{text}</p>
-          <Button
-            type="primary"
             style={{ backgroundColor: "rgb(194,64,52)" }}
             shape="circle"
             onClick={() => removeItemFromOrder(product_id)}
           >
             <MinusOutlined />
+          </Button>
+          <p style={{ width: "20px", textAlign: "center" }}>{text}</p>
+          <Button
+            type="primary"
+            shape="circle"
+            style={{ backgroundColor: "rgb(40,128,99)" }}
+            onClick={() => addItemToOrder({ product_id: product_id })}
+          >
+            <PlusOutlined />
           </Button>
         </div>
       ),
@@ -86,7 +87,7 @@ const OrderList = () => {
 
     form.resetFields();
     setChange(0);
-    setOrder({ order_type_id: 1, user_id: 1, discount: 0 });
+    setOrder({ order_type_id: 1, user_id: user.id, discount: 0 });
     setItemOrder([]);
   };
 
@@ -150,8 +151,11 @@ const OrderList = () => {
               () => ({
                 validator(_, value) {
                   const inputValue = parseInt(value);
-                  const total = totalPayment(); // Assuming totalPayment is a function that returns a number
-                  if (!inputValue && inputValue <= total) {
+                  const total = totalPayment();
+
+                  console.log(inputValue);
+                  console.log(inputValue <= total);
+                  if (inputValue && inputValue <= total) {
                     return Promise.resolve();
                   }
                   return Promise.reject(

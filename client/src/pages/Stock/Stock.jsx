@@ -1,37 +1,34 @@
 import { useState } from "react";
-import {
-  useExpenseData,
-  useDeleteExpenseData,
-} from "../../hooks/useExpenseData";
-import CreateExpenseModal from "./CreateExpenseModal";
-import UpdateExpenseModal from "./UpdateExpenseModal";
-import { Space, Table, Button, Popconfirm, Typography } from "antd";
+import { useStockData, useDeleteStockData } from "../../hooks/useStockData";
+import CreateStockModal from "./CreateStockModal";
+import UpdateStockModal from "./UpdateStockModal";
+import { Space, Table, Button, Popconfirm, Typography, Tag } from "antd";
 import useNotification from "../../hooks/useNotification";
 import { format, isToday } from "date-fns";
 
-const Expense = () => {
+const Stock = () => {
   const openNotificationWithIcon = useNotification();
 
-  const { data, isLoading } = useExpenseData();
-  const { mutate } = useDeleteExpenseData();
+  const { data, isLoading } = useStockData();
+  const { mutate } = useDeleteStockData();
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
-  const [currentExpense, setCurrentExpense] = useState(null);
+  const [currentStock, setCurrentStock] = useState(null);
 
   const showCreateModal = () => {
     setIsCreateModalVisible(true);
   };
 
-  const showUpdateModal = (expense) => {
-    setCurrentExpense(expense);
+  const showUpdateModal = (stock) => {
+    setCurrentStock(stock);
     setIsUpdateModalVisible(true);
   };
 
   const handleCancel = () => {
     setIsCreateModalVisible(false);
     setIsUpdateModalVisible(false);
-    setCurrentExpense(null);
+    setCurrentStock(null);
   };
 
   const confirmDelete = (id) => {
@@ -39,8 +36,8 @@ const Expense = () => {
 
     openNotificationWithIcon(
       "success",
-      "Expense deletion",
-      "Expense deleted successfully!"
+      "Stock deletion",
+      "Stock deleted successfully!"
     );
   };
 
@@ -50,20 +47,15 @@ const Expense = () => {
       render: (_, record) => (
         <Space size="middle">
           <Typography>
-            {record.name || record.product_name || record.packaging_name}
+            {record.product_name || record.packaging_name}
           </Typography>
         </Space>
       ),
     },
     {
-      title: "Amount",
-      dataIndex: "amount",
-      key: "amount",
-      render: (text) => (
-        <Space size="middle">
-          {text ? <Typography>PHP {text}</Typography> : ""}
-        </Space>
-      ),
+      title: "Quantity",
+      dataIndex: "quantity",
+      key: "quantity",
     },
     {
       title: "Created By",
@@ -81,8 +73,27 @@ const Expense = () => {
         <Space size="middle">
           <Typography>
             {format(
-              new Date(record.updated_at || record.expense_date),
+              new Date(record.updated_at || record.transaction_date),
               "MMM dd, yyyy | hh:mm a"
+            )}
+          </Typography>
+        </Space>
+      ),
+    },
+    {
+      title: "Type",
+      render: (_, record) => (
+        <Space size="middle">
+          <Typography>
+            {record.packaging_id ? (
+              <Tag color="default">Packaging</Tag>
+            ) : (
+              <Tag color="default">Product</Tag>
+            )}
+            {record.type === "restock" ? (
+              <Tag color="success">Restock</Tag>
+            ) : (
+              <Tag color="error">Damaged</Tag>
             )}
           </Typography>
         </Space>
@@ -96,18 +107,21 @@ const Expense = () => {
           <Button
             type="primary"
             onClick={() => showUpdateModal(record)}
-            disabled={!isToday(new Date(record.expense_date))}
+            disabled={!isToday(new Date(record.transaction_date))}
           >
             Update
           </Button>
           <Popconfirm
-            title="Delete the expense"
-            description="Are you sure to delete this expense?"
+            title="Delete the stock"
+            description="Are you sure to delete this stock?"
             onConfirm={() => confirmDelete(record.id)}
             okText="Yes"
             cancelText="No"
           >
-            <Button danger disabled={!isToday(new Date(record.expense_date))}>
+            <Button
+              danger
+              disabled={!isToday(new Date(record.transaction_date))}
+            >
               Delete
             </Button>
           </Popconfirm>
@@ -118,14 +132,14 @@ const Expense = () => {
 
   return (
     <>
-      <CreateExpenseModal
+      <CreateStockModal
         visible={isCreateModalVisible}
         onCancel={handleCancel}
       />
-      <UpdateExpenseModal
+      <UpdateStockModal
         visible={isUpdateModalVisible}
         onCancel={handleCancel}
-        expense={currentExpense}
+        stock={currentStock}
       />
       <Button
         style={{ marginBottom: "20px" }}
@@ -133,11 +147,11 @@ const Expense = () => {
         size="large"
         onClick={showCreateModal}
       >
-        Create Expense
+        Create Stock Adjustments
       </Button>
       <Table columns={columns} dataSource={data} loading={isLoading} />
     </>
   );
 };
 
-export default Expense;
+export default Stock;

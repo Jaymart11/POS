@@ -4,7 +4,7 @@ const db = require("../database.js");
 
 class PackagingModel {
   getAllPackagings(callback) {
-    db.query("SELECT * FROM packaging", callback);
+    db.query("SELECT * FROM packaging WHERE deleted_by IS NULL", callback);
   }
 
   getPackagingById(packagingId, callback) {

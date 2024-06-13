@@ -1,37 +1,73 @@
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
-  DesktopOutlined,
-  FileOutlined,
+  ProductOutlined,
+  ShoppingCartOutlined,
   PieChartOutlined,
-  TeamOutlined,
+  ShoppingOutlined,
   UserOutlined,
+  DatabaseOutlined,
+  BorderOuterOutlined,
+  LogoutOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
 const { Sider } = Layout;
-function getItem(label, key, icon, children) {
+function getItem(label, key, icon, style) {
   return {
     key,
     icon,
-    children,
     label,
+    style,
   };
 }
-const items = [
-  getItem("Option 1", "1", <PieChartOutlined />),
-  getItem("Option 2", "2", <DesktopOutlined />),
-  getItem("User", "sub1", <UserOutlined />, [
-    getItem("Tom", "3"),
-    getItem("Bill", "4"),
-    getItem("Alex", "5"),
-  ]),
-  getItem("Team", "sub2", <TeamOutlined />, [
-    getItem("Team 1", "6"),
-    getItem("Team 2", "8"),
-  ]),
-  getItem("Files", "9", <FileOutlined />),
-];
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+
+const Sidebar = ({ setIsLogin, isAdmin }) => {
+  const [collapsed, setCollapsed] = useState(true);
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
+  const location = useLocation();
+
+  const items =
+    user.access_level === 1 || isAdmin
+      ? [
+          getItem("Dashboard", "dashboard", <PieChartOutlined />),
+          getItem("Stock Adjustment", "stock", <BorderOuterOutlined />),
+          getItem("Product", "product", <ProductOutlined />),
+          getItem("Packaging", "packaging", <ShoppingOutlined />),
+          getItem("Ordering", "ordering", <ShoppingCartOutlined />),
+          getItem("Category", "category", <DatabaseOutlined />),
+          getItem("Expense", "expense", <WalletOutlined />),
+          getItem("User", "user", <UserOutlined />),
+          getItem("Logout", "logout", <LogoutOutlined />, {
+            position: "absolute",
+            bottom: 50,
+            width: "100%",
+          }),
+        ]
+      : [
+          getItem("Ordering", "ordering", <ShoppingCartOutlined />),
+          getItem("Stock Adjustment", "stock", <BorderOuterOutlined />),
+          getItem("Expense", "expense", <WalletOutlined />),
+          getItem("Logout", "logout", <LogoutOutlined />, {
+            position: "absolute",
+            bottom: 50,
+            width: "100%",
+          }),
+        ];
+
+  const handleMenuClick = (e) => {
+    if (e.key === "logout") {
+      localStorage.clear();
+      setIsLogin(false);
+      navigate("/");
+    } else {
+      const selectedItem = items.find((item) => item.key === e.key);
+      if (selectedItem && selectedItem.key) {
+        navigate(selectedItem.key); // Navigate to the corresponding path
+      }
+    }
+  };
   return (
     <Sider
       collapsible
@@ -40,9 +76,10 @@ const Sidebar = () => {
     >
       <Menu
         theme="dark"
-        defaultSelectedKeys={["1"]}
+        defaultSelectedKeys={[location.pathname.slice(1)]}
         mode="inline"
         items={items}
+        onClick={handleMenuClick}
       />
     </Sider>
   );

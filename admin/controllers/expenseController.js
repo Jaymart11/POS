@@ -46,6 +46,7 @@ exports.createExpense = (req, res) => {
 exports.updateExpense = (req, res) => {
   const expenseId = req.params.id;
   const expenseData = req.body;
+
   expenseModel.updateExpense(expenseId, expenseData, (err, result) => {
     if (err) {
       console.error(err);

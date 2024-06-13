@@ -1,6 +1,5 @@
 // models/userModel.js
 
-const mysql = require("mysql");
 const db = require("../database");
 
 class UserModel {
@@ -25,6 +24,10 @@ class UserModel {
 
   deleteUser(userId, callback) {
     db.query("DELETE FROM user WHERE id = ?", [userId], callback);
+  }
+
+  getUserByEmail(email, callback) {
+    db.query("SELECT * FROM user WHERE email = ?", [email], callback);
   }
 }
 

@@ -8,15 +8,24 @@ import Packaging from "./pages/Packaging/Packaging";
 import User from "./pages/User/User";
 import Menu from "./pages/Menu/Menu";
 import Expense from "./pages/Expense/Expense";
+import Stock from "./pages/Stock/Stock";
+import Login from "./pages/Login/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useState } from "react";
 
 function App() {
+  const [isLogin, setIsLogin] = useState(() => !!localStorage.getItem("user"));
+  const [isAdmin, setIsAdmin] = useState(false);
+
   return (
     <Layout
       style={{
         minHeight: "100vh",
       }}
     >
-      <Sidebar />
+      {location.pathname !== "/" && isLogin && (
+        <Sidebar setIsLogin={setIsLogin} isAdmin={isAdmin} />
+      )}
       <Layout>
         <Content
           style={{
@@ -24,12 +33,68 @@ function App() {
           }}
         >
           <Routes>
-            <Route path="/" element={<Category />} />
-            <Route path="/product" element={<Product />} />
-            <Route path="/packaging" element={<Packaging />} />
-            <Route path="/user" element={<User />} />
-            <Route path="/menu" element={<Menu />} />
-            <Route path="/expense" element={<Expense />} />
+            <Route
+              path="/"
+              element={
+                <Login setIsLogin={setIsLogin} setIsAdmin={setIsAdmin} />
+              }
+            />
+            <Route
+              path="/category"
+              element={
+                <ProtectedRoute>
+                  <Category />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/product"
+              element={
+                <ProtectedRoute>
+                  <Product />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/packaging"
+              element={
+                <ProtectedRoute>
+                  <Packaging />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user"
+              element={
+                <ProtectedRoute>
+                  <User />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ordering"
+              element={
+                <ProtectedRoute>
+                  <Menu />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/expense"
+              element={
+                <ProtectedRoute>
+                  <Expense />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/stock"
+              element={
+                <ProtectedRoute>
+                  <Stock />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </Content>
       </Layout>

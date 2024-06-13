@@ -1,18 +1,17 @@
 import { useState } from "react";
-import {
-  usePackagingData,
-  useDeletePackagingData,
-} from "../../hooks/usePackagingData";
+import { usePackagingData } from "../../hooks/usePackagingData";
+import { useUpdatePackagingData } from "../../hooks/usePackagingData";
 import CreatePackagingModal from "./CreatePackagingModal";
 import UpdatePackagingModal from "./UpdatePackagingModal";
 import { Space, Table, Button, Popconfirm } from "antd";
 import useNotification from "../../hooks/useNotification";
+import { format } from "date-fns";
 
 const Packaging = () => {
   const openNotificationWithIcon = useNotification();
-
+  const user = JSON.parse(localStorage.getItem("user"));
   const { data, isLoading } = usePackagingData();
-  const { mutate } = useDeletePackagingData();
+  const { mutate } = useUpdatePackagingData();
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
@@ -34,13 +33,27 @@ const Packaging = () => {
   };
 
   const confirmDelete = (id) => {
-    mutate(id);
+    try {
+      mutate({
+        id,
+        data: {
+          deleted_by: user.id,
+          deleted_at: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+        },
+      });
 
-    openNotificationWithIcon(
-      "success",
-      "Packaging deletion",
-      "Packaging deleted successfully!"
-    );
+      openNotificationWithIcon(
+        "success",
+        "Packaging deletion",
+        "Packaging deleted successfully!"
+      );
+    } catch (e) {
+      openNotificationWithIcon(
+        "error",
+        "Packaging deletion",
+        "Packaging deleted failed!"
+      );
+    }
   };
 
   const columns = [

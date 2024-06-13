@@ -75,3 +75,24 @@ exports.deleteUser = (req, res) => {
     res.json({ message: "User deleted successfully" });
   });
 };
+
+exports.loginUser = (req, res) => {
+  const { email, password } = req.body;
+  userModel.getUserByEmail(email, (err, results) => {
+    if (err) return res.status(500).json({ error: "Database error" });
+
+    const user = results[0];
+
+    if (results.length === 0 || password !== user.password)
+      return res.status(401).json({ message: "Invalid email or password" });
+
+    res.json({
+      message: "Login successful",
+      user: {
+        id: user.id,
+        email: user.email,
+        access_level: user.access_level_id,
+      },
+    });
+  });
+};
