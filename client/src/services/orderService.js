@@ -30,9 +30,9 @@ export const deleteOrderData = async (id) => {
   return response.data;
 };
 
-export const downloadReport = async () => {
+export const downloadReport = async (data) => {
   try {
-    const response = await apiClient.get(`/orders/report`, {
+    const response = await apiClient.post(`/orders/report`, data, {
       responseType: "blob", // Important for file download
     });
 

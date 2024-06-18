@@ -5,11 +5,16 @@ import {
   createUserData,
   updateUserData,
   deleteUserData,
+  getCashierData,
 } from "../services/userService";
 
 // Read
 export const useUserData = () => {
   return useQuery("userData", getUserData);
+};
+
+export const useCashierData = () => {
+  return useQuery("cashierData", getCashierData);
 };
 
 export const useUserDataById = (id) => {

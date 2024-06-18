@@ -10,6 +10,13 @@ class UserModel {
     );
   }
 
+  getAllCashier(callback) {
+    db.query(
+      "select u.id, u.first_name,u.email, u.password, u.last_name, u.access_level_id, a.name from user as u left join access_level as a on  u.access_level_id = a.id where u.access_level_id = 2",
+      callback
+    );
+  }
+
   getUserById(userId, callback) {
     db.query("SELECT * FROM user WHERE id = ?", [userId], callback);
   }

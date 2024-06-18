@@ -13,6 +13,17 @@ exports.getAllUsers = (req, res) => {
   });
 };
 
+exports.getAllCashier = (req, res) => {
+  userModel.getAllCashier((err, users) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+    res.json(users);
+  });
+};
+
 exports.getUserById = (req, res) => {
   const userId = req.params.id;
   userModel.getUserById(userId, (err, user) => {

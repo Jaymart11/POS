@@ -12,6 +12,11 @@ export const getUserData = async () => {
   return response.data;
 };
 
+export const getCashierData = async () => {
+  const response = await apiClient.get("/users/cashier");
+  return response.data;
+};
+
 // Read single
 export const getUserDataById = async (id) => {
   const response = await apiClient.get(`/users/${id}`);

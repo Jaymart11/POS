@@ -21,6 +21,7 @@ export const useCreateStockData = () => {
   return useMutation(createStockData, {
     onSuccess: () => {
       queryClient.invalidateQueries("stockData");
+      queryClient.invalidateQueries("productData");
     },
   });
 };
@@ -31,6 +32,7 @@ export const useUpdateStockData = () => {
   return useMutation(({ id, data }) => updateStockData(id, data), {
     onSuccess: () => {
       queryClient.invalidateQueries("stockData");
+      queryClient.invalidateQueries("productData");
     },
   });
 };
@@ -41,6 +43,7 @@ export const useDeleteStockData = () => {
   return useMutation((id) => deleteStockData(id), {
     onSuccess: () => {
       queryClient.invalidateQueries("stockData");
+      queryClient.invalidateQueries("productData");
     },
   });
 };

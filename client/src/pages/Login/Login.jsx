@@ -33,6 +33,7 @@ const Login = ({ setIsLogin, setIsAdmin }) => {
         onFinish={onFinish}
         autoComplete="off"
         style={{ width: "100%", maxWidth: "400px" }}
+        layout="vertical"
       >
         <Form.Item
           label="Email"

@@ -10,11 +10,12 @@ import Menu from "./pages/Menu/Menu";
 import Expense from "./pages/Expense/Expense";
 import Stock from "./pages/Stock/Stock";
 import Login from "./pages/Login/Login";
+import Report from "./pages/Report/Report";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useState } from "react";
 
 function App() {
-  const [isLogin, setIsLogin] = useState(() => !!localStorage.getItem("user"));
+  const [isLogin, setIsLogin] = useState(!!localStorage.getItem("user"));
   const [isAdmin, setIsAdmin] = useState(false);
 
   return (
@@ -37,6 +38,14 @@ function App() {
               path="/"
               element={
                 <Login setIsLogin={setIsLogin} setIsAdmin={setIsAdmin} />
+              }
+            />
+            <Route
+              path="/report"
+              element={
+                <ProtectedRoute>
+                  <Report />
+                </ProtectedRoute>
               }
             />
             <Route

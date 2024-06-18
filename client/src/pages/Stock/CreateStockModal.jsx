@@ -135,6 +135,10 @@ const CreateStockModal = ({ visible, onCancel }) => {
                   { required: true, message: "Please input the Quantity!" },
                   {
                     validator: (_, value) => {
+                      if (value < 1)
+                        return Promise.reject(
+                          new Error(`Quantity must have atleast 1!`)
+                        );
                       const maxVal = getFieldValue("product_id")
                         ? prodData.filter(
                             ({ id }) => id === getFieldValue("product_id")

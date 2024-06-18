@@ -17,8 +17,8 @@ const productLogQuantities = (isStart) => {
         );
       } else {
         db.query(
-          "UPDATE `product_quantity_log` SET `end_quantity` = ? WHERE `product_id` = ?",
-          [row.product_quantity, row.id],
+          "UPDATE `product_quantity_log` SET `end_quantity` = ? WHERE `product_id` = ? AND DATE(log_date) = ? ",
+          [row.product_quantity, row.id, new Date()],
           (err) => {
             if (err) throw err;
           }

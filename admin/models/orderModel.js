@@ -126,134 +126,235 @@ class OrderModel {
     );
   }
 
-  getReports(callback) {
+  getReports({ date, user_id }, callback) {
     db.query(
       `SELECT 
-    c.id,
+    c.id AS category_id,
     c.name AS category_name,
+    p.id AS product_id,
     p.product_name,
-    oi.price_at_order as price,
-    SUM(oi.quantity * oi.price_at_order) AS total_sales,
-    SUM(oi.quantity) AS total_quantity
+    COALESCE(oi.price_at_order, 0) AS price,
+    COALESCE(SUM(oi.quantity * oi.price_at_order), 0) AS total_sales,
+    COALESCE(SUM(oi.quantity), 0) AS total_quantity
     FROM 
-        orders o
-        LEFT JOIN order_item oi ON o.id = oi.order_id
-        LEFT JOIN product p ON p.id = oi.product_id
+        product p
         LEFT JOIN category c ON c.id = p.category_id
-    WHERE 
-        DATE(o.order_date) = curdate()
-    GROUP BY c.id, c.name, p.id, p.product_name, oi.price_at_order
-    ORDER BY c.id, p.product_name`,
+        LEFT JOIN (
+            SELECT 
+                oi.product_id, 
+                oi.price_at_order, 
+                oi.quantity 
+            FROM 
+                order_item oi 
+                INNER JOIN orders o ON oi.order_id = o.id 
+            WHERE 
+                DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' AND o.user_id = ${user_id}
+        ) oi ON p.id = oi.product_id
+    WHERE p.deleted_by is null
+    GROUP BY 
+        c.id, c.name, p.id, p.product_name, oi.price_at_order
+    ORDER BY 
+        c.id, p.product_name`,
       callback
     );
   }
 
-  getStocksReports(callback) {
+  getStocksReports({ date, user_id }, callback) {
     db.query(
-      `
-SELECT 
-    p.category_id, 
-    c.name AS category_name, 
-    p.product_name, 
-    pq.start_quantity as 'starting', 
-    COALESCE(e.dmg_quantity, 0) AS damaged, 
-    COALESCE(e.restk_quantity, 0) AS restock, 
-    t.total_quantity AS releasing,
-	p.product_quantity as ending
-    FROM 
-        product_quantity_log pq 
-    LEFT JOIN 
-        product p ON p.id = pq.product_id 
-    LEFT JOIN 
-        category c ON c.id = p.category_id 
-    LEFT JOIN 
-    (
+      `WITH MinDates AS (
+        SELECT
+            n.category_id, 
+            c.name AS category_name, 
+            l.product_id,
+            l.log_date,
+            n.product_name,
+            COALESCE(l.start_quantity, 0) AS quantity,
+            ROW_NUMBER() OVER (PARTITION BY l.product_id ORDER BY l.log_date ASC) AS rn
+        FROM
+            product_quantity_log l
+        LEFT JOIN
+            product n ON l.product_id = n.id
+      LEFT JOIN 
+            category c ON c.id = n.category_id 
+        WHERE
+            DATE(l.log_date) BETWEEN '${date[0]}' AND '${date[1]}' AND n.deleted_by IS NULL
+    ),
+    MaxDates AS (
+        SELECT
+        n.category_id, 
+            c.name AS category_name, 
+            l.product_id,
+            l.log_date,
+            n.product_name,
+            COALESCE(l.end_quantity, 0) AS quantity,
+            ROW_NUMBER() OVER (PARTITION BY l.product_id ORDER BY l.log_date DESC) AS rn
+        FROM
+            product_quantity_log l
+        LEFT JOIN
+            product n ON l.product_id = n.id
+        LEFT JOIN 
+            category c ON c.id = n.category_id 
+        WHERE
+            DATE(l.log_date) BETWEEN '${date[0]}' AND '${date[1]}' AND n.deleted_by IS NULL
+    ),
+    StartEndQuantities AS (
+        SELECT
+            min_log.category_id, 
+            min_log.category_name, 
+            min_log.product_id,
+            min_log.log_date AS start_log_date,
+            min_log.product_name AS start_name,
+            min_log.quantity AS start_quantity,
+            max_log.log_date AS end_log_date,
+            max_log.product_name AS end_name,
+            max_log.quantity AS end_quantity
+        FROM
+            (SELECT * FROM MinDates WHERE rn = 1) AS min_log
+        JOIN
+            (SELECT * FROM MaxDates WHERE rn = 1) AS max_log
+        ON
+            min_log.product_id = max_log.product_id
+    ),
+    OrderQuantities AS (
+        SELECT 
+            p.id AS product_id,
+            COALESCE(SUM(oi.quantity), 0) AS total_quantity
+        FROM 
+            orders o
+        LEFT JOIN 
+            order_item oi ON o.id = oi.order_id
+        LEFT JOIN 
+            product p ON oi.product_id = p.id
+        WHERE 
+            DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' AND o.user_id = ${user_id}
+        GROUP BY 
+            p.id
+    ),
+    StockAdjustments AS (
         SELECT 
             product_id, 
-            SUM(CASE WHEN type = 'damaged' THEN quantity ELSE 0 END) AS dmg_quantity,
-            SUM(CASE WHEN type = 'restock' THEN quantity ELSE 0 END) AS restk_quantity
+            COALESCE(SUM(CASE WHEN type = 'damaged' THEN quantity ELSE 0 END), 0) AS dmg_quantity,
+            COALESCE(SUM(CASE WHEN type = 'restock' THEN quantity ELSE 0 END), 0) AS restk_quantity
         FROM 
             stock_adjustments 
         WHERE 
-            DATE(transaction_date) = CURDATE() 
-            AND product_id IS NOT NULL
+            DATE(transaction_date) BETWEEN '${date[0]}' AND '${date[1]}' AND created_by = ${user_id}
         GROUP BY 
             product_id
-    ) e ON e.product_id = pq.product_id 
-    LEFT JOIN (
-    SELECT 
-	p.id AS product_id,
-    SUM(oi.quantity) AS total_quantity
-    FROM 
-        orders o
-        LEFT JOIN order_item oi ON o.id = oi.order_id
-        LEFT JOIN product p ON oi.product_id = p.id
-    WHERE 
-        DATE(o.order_date) = curdate()
-    GROUP BY p.id
-    
-    ) t on t.product_id = p.id
-    WHERE 
-      DATE(pq.log_date) = CURDATE() 
-    GROUP BY 
-      p.category_id, 
-      c.name, 
-      p.product_name, 
-      pq.start_quantity, 
-      pq.end_quantity, 
-      p.product_quantity,
-      e.dmg_quantity, 
-	  e.restk_quantity,
-      t.total_quantity
+    )
+    SELECT
+        seq.category_id,
+        seq.category_name,
+        seq.start_name as product_name,
+        seq.start_quantity as 'starting',
+        COALESCE(sa.dmg_quantity, 0) AS damaged,
+        COALESCE(sa.restk_quantity, 0) AS restock,
+      COALESCE(oq.total_quantity, 0) AS releasing,
+          CASE 
+            WHEN seq.end_quantity = 0 THEN COALESCE((SELECT product_quantity FROM product WHERE id = seq.product_id), 0)
+            ELSE seq.end_quantity 
+        END AS ending
+    FROM
+        StartEndQuantities seq
+    LEFT JOIN
+        OrderQuantities oq ON seq.product_id = oq.product_id
+    LEFT JOIN 
+        StockAdjustments sa ON sa.product_id = seq.product_id
     ORDER BY 
-      p.category_id`,
+        seq.category_id`,
       callback
     );
   }
 
-  getPackagingReports(callback) {
+  getPackagingReports({ date, user_id }, callback) {
     db.query(
-      `SELECT 
-      p.name, 
-      pq.start_quantity, 
-      COALESCE(e.dmg_quantity, 0) AS damaged, 
-      COALESCE(e.restk_quantity, 0) AS restock,  
-      t.total_quantity AS releasing,
-      p.quantity AS end_quantity
-      FROM 
-          packaging_quantity_log pq 
-      LEFT JOIN 
-          packaging p ON p.id = pq.packaging_id 
-      LEFT JOIN 
-          (
-              SELECT 
-                  packaging_id, 
-                  SUM(CASE WHEN type = 'damaged' THEN quantity ELSE 0 END) AS dmg_quantity,
-                  SUM(CASE WHEN type = 'restock' THEN quantity ELSE 0 END) AS restk_quantity
-              FROM 
-                  stock_adjustments 
-              WHERE 
-                  DATE(transaction_date) = CURDATE()
-              GROUP BY 
-                  packaging_id
-          ) e ON e.packaging_id = pq.packaging_id  
-          
-		LEFT JOIN (
+      `WITH MinDates AS (
+        SELECT
+            l.packaging_id,
+            l.log_date,
+            n.name,
+            COALESCE(l.start_quantity, 0) AS quantity,
+            ROW_NUMBER() OVER (PARTITION BY l.packaging_id ORDER BY l.log_date ASC) AS rn
+        FROM
+            packaging_quantity_log l
+        LEFT JOIN
+            packaging n ON l.packaging_id = n.id
+        WHERE
+            DATE(l.log_date) BETWEEN '${date[0]}' AND '${date[1]}' AND n.deleted_by IS NULL
+    ),
+    MaxDates AS (
+        SELECT
+            l.packaging_id,
+            l.log_date,
+            n.name,
+            COALESCE(l.end_quantity, 0) AS quantity,
+            ROW_NUMBER() OVER (PARTITION BY l.packaging_id ORDER BY l.log_date DESC) AS rn
+        FROM
+            packaging_quantity_log l
+        LEFT JOIN
+            packaging n ON l.packaging_id = n.id
+        WHERE
+            DATE(l.log_date) BETWEEN '${date[0]}' AND '${date[1]}' AND n.deleted_by IS NULL
+    ),
+    StartEndQuantities AS (
+        SELECT
+            min_log.packaging_id,
+            min_log.log_date AS start_log_date,
+            min_log.name AS start_name,
+            min_log.quantity AS start_quantity,
+            max_log.log_date AS end_log_date,
+            max_log.name AS end_name,
+            max_log.quantity AS end_quantity
+        FROM
+            (SELECT * FROM MinDates WHERE rn = 1) AS min_log
+        JOIN
+            (SELECT * FROM MaxDates WHERE rn = 1) AS max_log
+        ON
+            min_log.packaging_id = max_log.packaging_id
+    ),
+    OrderQuantities AS (
         SELECT 
-	p.id AS packaging_id,
-    SUM(oi.quantity) AS total_quantity
-    FROM 
-        orders o
-        LEFT JOIN order_item oi ON o.id = oi.order_id
-        LEFT JOIN packaging p ON oi.packaging_id = p.id
-    WHERE 
-        DATE(o.order_date) = curdate()
-    GROUP BY p.id
-        ) t ON t.packaging_id = p.id
-      WHERE 
-          DATE(pq.log_date) = CURDATE() 
-      GROUP BY 
-          p.name, pq.start_quantity, pq.end_quantity, p.quantity, e.dmg_quantity, e.restk_quantity, t.total_quantity`,
+            p.id AS packaging_id,
+            COALESCE(SUM(oi.quantity), 0) AS total_quantity
+        FROM 
+            orders o
+        LEFT JOIN 
+            order_item oi ON o.id = oi.order_id
+        LEFT JOIN 
+            packaging p ON oi.packaging_id = p.id
+        WHERE 
+            DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' AND o.user_id = ${user_id}
+        GROUP BY 
+            p.id
+    ),
+    StockAdjustments AS (
+        SELECT 
+            packaging_id, 
+            COALESCE(SUM(CASE WHEN type = 'damaged' THEN quantity ELSE 0 END), 0) AS dmg_quantity,
+            COALESCE(SUM(CASE WHEN type = 'restock' THEN quantity ELSE 0 END), 0) AS restk_quantity
+        FROM 
+            stock_adjustments 
+        WHERE 
+            DATE(transaction_date) BETWEEN '${date[0]}' AND '${date[1]}' AND created_by = ${user_id}
+        GROUP BY 
+            packaging_id
+    )
+    SELECT
+        seq.start_name as name,
+        seq.start_quantity,
+        COALESCE(sa.dmg_quantity, 0) AS damaged,
+        COALESCE(sa.restk_quantity, 0) AS restock,
+      COALESCE(oq.total_quantity, 0) AS releasing,
+          CASE 
+            WHEN seq.end_quantity = 0 THEN COALESCE((SELECT quantity FROM packaging WHERE id = seq.packaging_id), 0)
+            ELSE seq.end_quantity 
+        END AS end_quantity
+    FROM
+        StartEndQuantities seq
+    LEFT JOIN
+        OrderQuantities oq ON seq.packaging_id = oq.packaging_id
+    LEFT JOIN 
+        StockAdjustments sa ON sa.packaging_id = seq.packaging_id`,
       callback
     );
   }

@@ -4,7 +4,7 @@ const orderController = require("../controllers/orderController");
 const orderItemController = require("../controllers/orderItemController");
 
 router.get("/", orderController.getAllOrders);
-router.get("/report", orderController.exportReport);
+router.post("/report", orderController.exportReport);
 router.get("/:id", orderController.getOrderById);
 router.post("/", orderController.createOrder);
 router.put("/:id", orderController.updateOrder);

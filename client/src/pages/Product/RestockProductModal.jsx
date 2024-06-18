@@ -1,5 +1,4 @@
 import { Modal, Form, Input, Select } from "antd";
-import { useUpdateProductData } from "../../hooks/useProductData";
 import { useCreateStockData } from "../../hooks/useStockData";
 import useNotification from "../../hooks/useNotification";
 import { useEffect } from "react";
@@ -10,8 +9,7 @@ const RestockProductModal = ({
   setCurrentCategory,
   product,
 }) => {
-  const { mutate, isLoading } = useUpdateProductData();
-  const { mutate: stockMutate, isLoading: stockLoading } = useCreateStockData();
+  const { mutate: stockMutate, isLoading } = useCreateStockData();
 
   const openNotificationWithIcon = useNotification();
   const [form] = Form.useForm();
@@ -27,11 +25,6 @@ const RestockProductModal = ({
     form
       .validateFields()
       .then((values) => {
-        mutate({
-          id: product.id,
-          data: { ...values, ...product, updated_by: user.id },
-        });
-
         stockMutate({
           product_id: product.id,
           quantity: values.quantity,
@@ -75,6 +68,9 @@ const RestockProductModal = ({
             ]}
           >
             <Select
+              onChange={(val) => {
+                form.setFieldValue("quantity", val);
+              }}
               options={[
                 {
                   label: "Restock",
@@ -87,8 +83,38 @@ const RestockProductModal = ({
               ]}
             />
           </Form.Item>
-          <Form.Item name="quantity" label="Quantity">
-            <Input type="number" />
+          <Form.Item dependencies={["restock"]}>
+            {({ getFieldValue }) => (
+              <Form.Item
+                name="quantity"
+                label="Quantity"
+                rules={[
+                  { required: true, message: "Please input the Quantity!" },
+                  {
+                    validator: (_, value) => {
+                      if (value < 1) {
+                        return Promise.reject(
+                          new Error(`Quantity must have atleast 1!`)
+                        );
+                      } else if (
+                        parseInt(value) > product.product_quantity &&
+                        getFieldValue("restock") !== "restock"
+                      ) {
+                        return Promise.reject(
+                          new Error(
+                            `The quantity cannot exceed ${product.product_quantity}!`
+                          )
+                        );
+                      } else {
+                        return Promise.resolve();
+                      }
+                    },
+                  },
+                ]}
+              >
+                <Input type="number" />
+              </Form.Item>
+            )}
           </Form.Item>
         </Form>
       </Modal>

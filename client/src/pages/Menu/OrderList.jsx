@@ -153,9 +153,7 @@ const OrderList = () => {
                   const inputValue = parseInt(value);
                   const total = totalPayment();
 
-                  console.log(inputValue);
-                  console.log(inputValue <= total);
-                  if (inputValue && inputValue <= total) {
+                  if (inputValue <= total) {
                     return Promise.resolve();
                   }
                   return Promise.reject(
