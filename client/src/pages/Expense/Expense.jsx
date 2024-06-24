@@ -135,7 +135,12 @@ const Expense = () => {
       >
         Create Expense
       </Button>
-      <Table columns={columns} dataSource={data} loading={isLoading} />
+      <Table
+        columns={columns}
+        dataSource={data}
+        loading={isLoading}
+        scroll={{ x: "max-content" }}
+      />
     </>
   );
 };

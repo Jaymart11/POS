@@ -1,32 +1,34 @@
 const cron = require("node-cron");
 const db = require("../database");
+const dayjs = require("dayjs");
 
 // Function to log quantities
 const logQuantities = (isStart) => {
-  db.query("SELECT `id`, `quantity` FROM `packaging`", (err, results) => {
-    if (err) throw err;
+  db.query(
+    "SELECT `id`, `quantity` FROM `packaging` WHERE deleted_by IS NULL",
+    (err, results) => {
+      if (err) throw err;
 
-    results.forEach((row) => {
-      if (isStart) {
-        db.query(
-          "INSERT INTO `packaging_quantity_log` (`packaging_id`, `start_quantity`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `start_quantity` = VALUES(`start_quantity`)",
-          [row.id, row.quantity],
-          (err) => {
-            if (err) throw err;
-          }
-        );
-      } else {
-        db.query(
-          "UPDATE `packaging_quantity_log` SET `end_quantity` = ? WHERE `packaging_id` = ? AND DATE(log_date) = ? ",
-          [row.quantity, row.id, new Date()],
-          (err) => {
-            if (err) throw err;
-          }
-        );
-      }
-    });
-    console.log("Quantities logged:", isStart ? "start" : "end");
-  });
+      results.forEach((row) => {
+        const logDate = dayjs(new Date()).format("YYYY-MM-DD"); // Format date as YYYY-MM-DD
+        const query = `
+        INSERT INTO \`packaging_quantity_log\` (\`packaging_id\`, \`log_date\`, \`${
+          isStart ? "start_quantity" : "end_quantity"
+        }\`)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+        \`${isStart ? "start_quantity" : "end_quantity"}\` = VALUES(\`${
+          isStart ? "start_quantity" : "end_quantity"
+        }\`)
+      `;
+
+        db.query(query, [row.id, logDate, row.quantity], (err) => {
+          if (err) throw err;
+        });
+      });
+      console.log("Quantities logged:", isStart ? "start" : "end");
+    }
+  );
 };
 
 // Schedule tasks
@@ -36,7 +38,7 @@ cron.schedule("0 0 * * *", () => {
 });
 
 // Log end quantities at the end of the day
-cron.schedule("54 23 * * *", () => {
+cron.schedule("59 23 * * *", () => {
   logQuantities(false);
 });
 

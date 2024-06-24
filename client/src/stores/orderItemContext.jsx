@@ -49,6 +49,22 @@ export const OrderItemProvider = ({ children }) => {
     return orderItem.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const totalPackagingItem = () => {
+    const quantityByPackagingId = {};
+
+    orderItem.forEach((product) => {
+      const packagingId = product.packaging_id;
+      const quantity = product.quantity;
+
+      if (quantityByPackagingId[packagingId]) {
+        quantityByPackagingId[packagingId] += quantity;
+      } else {
+        quantityByPackagingId[packagingId] = quantity;
+      }
+    });
+    return quantityByPackagingId;
+  };
+
   return (
     <OrderItemContext.Provider
       value={{
@@ -58,6 +74,7 @@ export const OrderItemProvider = ({ children }) => {
         totalPayment,
         totalItems,
         setItemOrder,
+        totalPackagingItem,
       }}
     >
       {children}

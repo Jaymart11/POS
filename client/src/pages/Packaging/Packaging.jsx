@@ -6,6 +6,7 @@ import UpdatePackagingModal from "./UpdatePackagingModal";
 import { Space, Table, Button, Popconfirm } from "antd";
 import useNotification from "../../hooks/useNotification";
 import { format } from "date-fns";
+import RestockPackagingModal from "./RestockPackagingModal";
 
 const Packaging = () => {
   const openNotificationWithIcon = useNotification();
@@ -15,6 +16,7 @@ const Packaging = () => {
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
+  const [isStockModalVisible, setIsStockModalVisible] = useState(false);
   const [currentPackaging, setCurrentPackaging] = useState(null);
 
   const showCreateModal = () => {
@@ -26,9 +28,15 @@ const Packaging = () => {
     setIsUpdateModalVisible(true);
   };
 
+  const showStockModal = (packaging) => {
+    setCurrentPackaging(packaging);
+    setIsStockModalVisible(true);
+  };
+
   const handleCancel = () => {
     setIsCreateModalVisible(false);
     setIsUpdateModalVisible(false);
+    setIsStockModalVisible(false);
     setCurrentPackaging(null);
   };
 
@@ -72,6 +80,9 @@ const Packaging = () => {
       key: "action",
       render: (_, record) => (
         <Space size="middle">
+          <Button type="primary" onClick={() => showStockModal(record)}>
+            Restock/Damaged
+          </Button>
           <Button type="primary" onClick={() => showUpdateModal(record)}>
             Update
           </Button>
@@ -100,6 +111,12 @@ const Packaging = () => {
         onCancel={handleCancel}
         packaging={currentPackaging}
       />
+
+      <RestockPackagingModal
+        visible={isStockModalVisible}
+        onCancel={handleCancel}
+        packaging={currentPackaging}
+      />
       <Button
         style={{ marginBottom: "20px" }}
         type="primary"
@@ -108,7 +125,12 @@ const Packaging = () => {
       >
         Create Packaging
       </Button>
-      <Table columns={columns} dataSource={data} loading={isLoading} />
+      <Table
+        columns={columns}
+        dataSource={data}
+        loading={isLoading}
+        scroll={{ x: "max-content" }}
+      />
     </>
   );
 };

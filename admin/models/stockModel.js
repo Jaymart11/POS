@@ -53,7 +53,8 @@ class StockModel {
   }
 
   updateStock(stockId, stockData, callback) {
-    const { product_id, quantity, packaging_id, type } = stockData;
+    const { product_id, quantity, packaging_id, type, prev_quantity } =
+      stockData;
 
     // Update the expense
     db.query(
@@ -65,34 +66,41 @@ class StockModel {
           return callback(updateErr);
         }
 
-        // If it's a product expense and quantity is provided, update the product quantity
         if (product_id && quantity !== undefined) {
           let productUpdateQuery =
-            type === "restock"
-              ? "UPDATE product SET product_quantity = product_quantity + ? WHERE id = ?"
-              : "UPDATE product SET product_quantity = product_quantity - ? WHERE id = ?";
-          db.query(
-            productUpdateQuery,
-            [quantity, product_id],
-            (productUpdateErr) => {
-              if (productUpdateErr) {
-                console.error(
-                  "Failed to update product quantity:",
-                  productUpdateErr
-                );
-                return callback(productUpdateErr);
-              }
-              callback(null, updateResult);
+            prev_quantity == quantity
+              ? "UPDATE product SET product_quantity = product_quantity WHERE id = ?"
+              : prev_quantity < quantity
+              ? `UPDATE product SET product_quantity = product_quantity ${
+                  type === "restock" ? "+" : "-"
+                } ${quantity - prev_quantity}  WHERE id = ?`
+              : `UPDATE product SET product_quantity = product_quantity ${
+                  type === "restock" ? "-" : "+"
+                } ${prev_quantity - quantity} WHERE id = ?`;
+          db.query(productUpdateQuery, [product_id], (productUpdateErr) => {
+            if (productUpdateErr) {
+              console.error(
+                "Failed to update product quantity:",
+                productUpdateErr
+              );
+              return callback(productUpdateErr);
             }
-          );
+            callback(null, updateResult);
+          });
         } else if (packaging_id && quantity !== undefined) {
           let packagingUpdateQuery =
-            type === "restock"
-              ? "UPDATE packaging SET quantity = quantity + ? WHERE id = ?"
-              : "UPDATE packaging SET quantity = quantity - ? WHERE id = ?";
+            prev_quantity == quantity
+              ? "UPDATE packaging SET quantity = quantity WHERE id = ?"
+              : prev_quantity < quantity
+              ? `UPDATE packaging SET quantity = quantity ${
+                  type === "restock" ? "+" : "-"
+                } ${quantity - prev_quantity}  WHERE id = ?`
+              : `UPDATE packaging SET quantity = quantity ${
+                  type === "restock" ? "-" : "+"
+                } ${prev_quantity - quantity} WHERE id = ?`;
           db.query(
             packagingUpdateQuery,
-            [quantity, packaging_id],
+            [packaging_id],
             (packagingUpdateErr) => {
               if (packagingUpdateErr) {
                 console.error(

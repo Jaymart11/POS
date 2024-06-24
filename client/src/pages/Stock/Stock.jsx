@@ -86,9 +86,9 @@ const Stock = () => {
         <Space size="middle">
           <Typography>
             {record.packaging_id ? (
-              <Tag color="default">Packaging</Tag>
+              <Tag color="processing">Packaging</Tag>
             ) : (
-              <Tag color="default">Product</Tag>
+              <Tag color="warning">Product</Tag>
             )}
             {record.type === "restock" ? (
               <Tag color="success">Restock</Tag>
@@ -149,7 +149,12 @@ const Stock = () => {
       >
         Create Stock Adjustments
       </Button>
-      <Table columns={columns} dataSource={data} loading={isLoading} />
+      <Table
+        columns={columns}
+        dataSource={data}
+        loading={isLoading}
+        scroll={{ x: "max-content" }}
+      />
     </>
   );
 };

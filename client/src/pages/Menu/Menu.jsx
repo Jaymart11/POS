@@ -8,10 +8,10 @@ const Menu = () => {
     <OrderProvider>
       <OrderItemProvider>
         <Row gutter={[16, 16]}>
-          <Col span={14}>
+          <Col sm={24} md={14}>
             <MenuList />
           </Col>
-          <Col span={10}>
+          <Col sm={24} md={10}>
             <OrderList />
           </Col>
         </Row>

@@ -26,7 +26,14 @@ const UpdateStockModal = ({ visible, onCancel, stock }) => {
       .validateFields()
       .then((values) => {
         if (!isError) {
-          mutate({ id: stock.id, data: { ...values, updated_by: user.id } });
+          mutate({
+            id: stock.id,
+            data: {
+              ...values,
+              updated_by: user.id,
+              prev_quantity: stock.quantity,
+            },
+          });
           openNotificationWithIcon(
             "success",
             "Stock update",
@@ -130,12 +137,45 @@ const UpdateStockModal = ({ visible, onCancel, stock }) => {
             }
           </Form.Item>
 
-          <Form.Item
-            name="quantity"
-            label="Quantity"
-            rules={[{ required: true, message: "Please input the Quantity!" }]}
-          >
-            <Input type="number" />
+          <Form.Item dependencies={["product_id", "packaging_id"]}>
+            {({ getFieldValue }) => (
+              <Form.Item
+                name="quantity"
+                label="Quantity"
+                rules={[
+                  { required: true, message: "Please input the Quantity!" },
+                  {
+                    validator: (_, value) => {
+                      if (value < 1)
+                        return Promise.reject(
+                          new Error(`Quantity must have atleast 1!`)
+                        );
+                      const maxVal = getFieldValue("product_id")
+                        ? prodData.filter(
+                            ({ id }) => id === getFieldValue("product_id")
+                          )[0].product_quantity
+                        : packData.filter(
+                            ({ id }) => id === getFieldValue("packaging_id")
+                          )[0].quantity;
+                      return parseInt(value) > maxVal &&
+                        getFieldValue("type") !== "restock"
+                        ? Promise.reject(
+                            new Error(`The quantity cannot exceed ${maxVal}!`)
+                          )
+                        : Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                <Input
+                  type="number"
+                  disabled={
+                    !getFieldValue("product_id") &&
+                    !getFieldValue("packaging_id")
+                  }
+                />
+              </Form.Item>
+            )}
           </Form.Item>
         </Form>
       </Modal>

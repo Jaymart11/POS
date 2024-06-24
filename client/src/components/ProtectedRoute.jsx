@@ -4,7 +4,7 @@ const ProtectedRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("user"));
   const location = useLocation();
 
-  const allowedRoute = ["/ordering", "/stock", "/expense"];
+  const allowedRoute = ["/ordering", "/stock", "/expense", "/report"];
 
   if (!user) {
     return <Navigate to="/" replace />;

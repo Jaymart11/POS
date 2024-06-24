@@ -1,5 +1,14 @@
 import { useContext, useState } from "react";
-import { Table, Button, Flex, Card, Form, Segmented, Input } from "antd";
+import {
+  Table,
+  Button,
+  Flex,
+  Card,
+  Form,
+  Segmented,
+  Input,
+  Popconfirm,
+} from "antd";
 import { OrderItemContext } from "../../stores/orderItemContext";
 import { OrderContext } from "../../stores/orderContext";
 import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
@@ -133,7 +142,8 @@ const OrderList = () => {
         columns={columns}
         dataSource={orderItem}
         pagination={false}
-        locale={{}}
+        locale={{ emptyText: "No Order Yet" }}
+        scroll={{ x: "max-content" }}
       />
       <Card style={{ marginTop: "10px" }}>
         <Form
@@ -167,6 +177,7 @@ const OrderList = () => {
               type="number"
               prefix="PHP"
               style={{ width: "100%" }}
+              disabled={!orderItem.length}
               onChange={(e) => {
                 const amount = form.getFieldValue("amount");
                 setOrder({ ...order, discount: parseInt(e.target.value || 0) });
@@ -205,6 +216,7 @@ const OrderList = () => {
               type="number"
               style={{ width: "100%" }}
               prefix="PHP"
+              disabled={!orderItem.length}
               onChange={(e) => {
                 setChange(
                   parseInt(e.target.value) - (totalPayment() - order.discount)
@@ -250,14 +262,22 @@ const OrderList = () => {
             </Form.Item>
           )}
           <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              style={{ width: "100%" }}
-              loading={isLoading}
+            <Popconfirm
+              title="Save this order"
+              description="Are you sure to save this order?"
+              onConfirm={() => form.submit()}
+              okText="Yes"
+              cancelText="No"
             >
-              Save
-            </Button>
+              <Button
+                type="primary"
+                style={{ width: "100%" }}
+                loading={isLoading}
+                disabled={!orderItem.length}
+              >
+                Save
+              </Button>
+            </Popconfirm>
           </Form.Item>
         </Form>
       </Card>

@@ -7,7 +7,6 @@ import CreateCategoryModal from "./CreateCategoryModal";
 import UpdateCategoryModal from "./UpdateCategoryModal";
 import { Space, Table, Button, Popconfirm } from "antd";
 import useNotification from "../../hooks/useNotification";
-import { downloadReport } from "../../services/orderService";
 const Category = () => {
   const openNotificationWithIcon = useNotification();
 
@@ -90,7 +89,6 @@ const Category = () => {
       >
         Create Category
       </Button>
-      <Button onClick={downloadReport}>Test</Button>
       <Table columns={columns} dataSource={data} loading={isLoading} />
     </>
   );

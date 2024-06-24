@@ -4,12 +4,15 @@ const db = require("../database.js");
 
 class ProductModel {
   getAllProducts(categoryId, callback) {
-    let query = "SELECT * FROM product";
+    let query =
+      "SELECT p.*, pk.quantity FROM product p LEFT JOIN packaging pk ON pk.id = packaging_id";
     if (categoryId) {
-      query += " WHERE category_id = ? AND deleted_by IS NULL";
+      query += " WHERE p.category_id = ? AND p.deleted_by IS NULL";
     } else {
-      query += " WHERE deleted_by IS NULL";
+      query += " WHERE p.deleted_by IS NULL";
     }
+
+    query += " ORDER BY p.category_id";
     db.query(query, [categoryId], callback);
   }
 

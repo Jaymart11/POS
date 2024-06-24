@@ -1,6 +1,7 @@
 // controllers/productController.js
 
 const productModel = require("../models/productModel.js");
+const { productLogQuantities } = require("../schedulers/productScheduler.js");
 
 exports.getAllProducts = (req, res) => {
   const categoryId = req.query.categoryId;
@@ -38,6 +39,7 @@ exports.createProduct = (req, res) => {
       res.status(500).json({ error: "Internal server error" });
       return;
     }
+    productLogQuantities(true);
     res
       .status(201)
       .json({ message: "Product created successfully", id: result.insertId });

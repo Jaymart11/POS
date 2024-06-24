@@ -22,6 +22,7 @@ export const useCreateStockData = () => {
     onSuccess: () => {
       queryClient.invalidateQueries("stockData");
       queryClient.invalidateQueries("productData");
+      queryClient.invalidateQueries("packagingData");
     },
   });
 };
@@ -33,6 +34,7 @@ export const useUpdateStockData = () => {
     onSuccess: () => {
       queryClient.invalidateQueries("stockData");
       queryClient.invalidateQueries("productData");
+      queryClient.invalidateQueries("packagingData");
     },
   });
 };
@@ -44,6 +46,7 @@ export const useDeleteStockData = () => {
     onSuccess: () => {
       queryClient.invalidateQueries("stockData");
       queryClient.invalidateQueries("productData");
+      queryClient.invalidateQueries("packagingData");
     },
   });
 };

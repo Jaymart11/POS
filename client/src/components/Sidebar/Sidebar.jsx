@@ -31,14 +31,16 @@ const Sidebar = ({ setIsLogin, isAdmin }) => {
   const items =
     user.access_level === 1 || isAdmin
       ? [
-          getItem("Dashboard", "dashboard", <PieChartOutlined />),
+          // getItem("Dashboard", "dashboard", <PieChartOutlined />),
+          getItem("Report", "report", <PieChartOutlined />),
           getItem("Stock Adjustment", "stock", <BorderOuterOutlined />),
           getItem("Product", "product", <ProductOutlined />),
           getItem("Packaging", "packaging", <ShoppingOutlined />),
           getItem("Ordering", "ordering", <ShoppingCartOutlined />),
-          getItem("Category", "category", <DatabaseOutlined />),
           getItem("Expense", "expense", <WalletOutlined />),
+          getItem("Category", "category", <DatabaseOutlined />),
           getItem("User", "user", <UserOutlined />),
+
           getItem("Logout", "logout", <LogoutOutlined />, {
             position: "absolute",
             bottom: 50,
@@ -49,6 +51,7 @@ const Sidebar = ({ setIsLogin, isAdmin }) => {
           getItem("Ordering", "ordering", <ShoppingCartOutlined />),
           getItem("Stock Adjustment", "stock", <BorderOuterOutlined />),
           getItem("Expense", "expense", <WalletOutlined />),
+          getItem("Report", "report", <PieChartOutlined />),
           getItem("Logout", "logout", <LogoutOutlined />, {
             position: "absolute",
             bottom: 50,

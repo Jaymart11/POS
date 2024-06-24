@@ -199,238 +199,250 @@ exports.exportReport = (req, res) => {
         return;
       }
 
-      orderModel.getReports(req.body, (err, result) => {
+      orderModel.getTotalDiscount(req.body, (err, discountRes) => {
         if (err) {
           console.log(err);
           res.status(500).send("Error fetching data");
           return;
         }
 
-        let lastCategory = null;
-        let grossSales = 0;
+        const discount = parseInt(discountRes[0].discount);
 
-        // Add rows
-        result.forEach((row) => {
-          if (row.category_name !== lastCategory) {
-            categoryRow = worksheet.addRow({
-              product_name: row.category_name,
-              price: "",
-              total_quantity: "",
-              total_sales: "",
-            });
-            lastCategory = row.category_name;
-            categoryRow.getCell(1).font = {
-              bold: true,
-              size: 13,
-            };
-            categoryRow.eachCell({ includeEmpty: true }, (cell) => {
-              cell.fill = {
-                type: "pattern",
-                pattern: "solid",
-                fgColor: { argb: "fffff2cc" },
-              }; // Light green background
-            });
-          }
-          productRow = worksheet.addRow({
-            product_name: row.product_name,
-            price: parseInt(row.price),
-            total_quantity: parseInt(row.total_quantity),
-            total_sales: parseInt(row.total_sales),
-          });
-
-          productRow.eachCell({ includeEmpty: true }, (cell) => {
-            cell.font = {
-              size: 12,
-            };
-          });
-          grossSales += parseInt(row.total_sales);
-        });
-
-        gross = worksheet.addRow({
-          product_name: "GROSS SALES",
-          price: "",
-          total_quantity: "",
-          total_sales: grossSales,
-        });
-        gross.font = {
-          bold: true,
-          size: 18,
-        };
-
-        worksheet.mergeCells(`A${gross.number}:C${gross.number}`);
-
-        worksheet.addRow([""]);
-        worksheet.addRow(["Gross Sales", "", "", grossSales]);
-
-        expenseModel.getTotalExpenses(req.body, (err, TEresult) => {
+        orderModel.getReports(req.body, (err, result) => {
           if (err) {
             console.log(err);
             res.status(500).send("Error fetching data");
             return;
           }
 
-          // Ensure OPresult is an array of expense objects
+          let lastCategory = null;
+          let grossSales = 0;
 
-          let expenseTotal = 0;
-
-          TEresult.forEach((expense, index) => {
-            if (index === 0) {
-              worksheet.addRow([
-                "Expense",
-                expense.name,
-                parseInt(expense.amount),
-              ]);
-              expenseTotal += parseInt(expense.amount);
-            } else {
-              worksheet.addRow(["", expense.name, parseInt(expense.amount)]);
-              expenseTotal += parseInt(expense.amount);
+          // Add rows
+          result.forEach((row) => {
+            if (row.category_name !== lastCategory) {
+              categoryRow = worksheet.addRow({
+                product_name: row.category_name,
+                price: "",
+                total_quantity: "",
+                total_sales: "",
+              });
+              lastCategory = row.category_name;
+              categoryRow.getCell(1).font = {
+                bold: true,
+                size: 13,
+              };
+              categoryRow.eachCell({ includeEmpty: true }, (cell) => {
+                cell.fill = {
+                  type: "pattern",
+                  pattern: "solid",
+                  fgColor: { argb: "fffff2cc" },
+                }; // Light green background
+              });
             }
+            productRow = worksheet.addRow({
+              product_name: row.product_name,
+              price: parseInt(row.price),
+              total_quantity: parseInt(row.total_quantity),
+              total_sales: parseInt(row.total_sales),
+            });
+
+            productRow.eachCell({ includeEmpty: true }, (cell) => {
+              cell.font = {
+                size: 12,
+              };
+            });
+            grossSales += parseInt(row.total_sales);
           });
 
-          if (TEresult.length)
-            worksheet.addRow(["", "Total", "", expenseTotal]);
+          gross = worksheet.addRow({
+            product_name: "GROSS SALES",
+            price: "",
+            total_quantity: "",
+            total_sales: grossSales,
+          });
+          gross.font = {
+            bold: true,
+            size: 18,
+          };
 
-          expenseModel.getOnlinePayment(req.body, (err, OPresult) => {
+          worksheet.mergeCells(`A${gross.number}:C${gross.number}`);
+
+          worksheet.addRow([""]);
+          worksheet.addRow(["Gross Sales", "", "", grossSales]);
+          worksheet.addRow(["Discounts", "", "", discount]);
+
+          expenseModel.getTotalExpenses(req.body, (err, TEresult) => {
             if (err) {
               console.log(err);
               res.status(500).send("Error fetching data");
               return;
             }
 
-            let opTotal = 0;
             // Ensure OPresult is an array of expense objects
-            OPresult.forEach((online, index) => {
-              worksheet.addRow([
-                online.name,
-                "",
-                "",
-                parseInt(online.total_price),
-              ]);
-              opTotal += parseInt(online.total_price);
+
+            let expenseTotal = 0;
+
+            TEresult.forEach((expense, index) => {
+              if (index === 0) {
+                worksheet.addRow([
+                  "Expenses",
+                  expense.name,
+                  parseInt(expense.amount),
+                ]);
+                expenseTotal += parseInt(expense.amount);
+              } else {
+                worksheet.addRow(["", expense.name, parseInt(expense.amount)]);
+                expenseTotal += parseInt(expense.amount);
+              }
             });
 
-            net = worksheet.addRow([
-              "NET SALES",
-              "",
-              "",
-              grossSales - expenseTotal - opTotal,
-            ]);
+            if (TEresult.length)
+              worksheet.addRow(["", "Total", "", expenseTotal]);
 
-            net.font = {
-              bold: true,
-              size: 18,
-            };
-
-            worksheet.mergeCells(`A${net.number}:C${net.number}`);
-
-            orderModel.getStocksReports(req.body, (err, stockResult) => {
+            expenseModel.getOnlinePayment(req.body, (err, OPresult) => {
               if (err) {
                 console.log(err);
                 res.status(500).send("Error fetching data");
                 return;
               }
 
-              let lastCategory1 = null;
-
-              // Add rows
-              stockResult.forEach((row) => {
-                if (row.category_name !== lastCategory1) {
-                  categoryRow1 = worksheet2.addRow({
-                    product_name: row.category_name,
-                    start_quantity: "",
-                    end_quantity: "",
-                    releasing: "",
-                  });
-                  lastCategory1 = row.category_name;
-                  categoryRow1.getCell(1).font = {
-                    bold: true,
-                    size: 13,
-                  };
-                  categoryRow1.eachCell({ includeEmpty: true }, (cell) => {
-                    cell.fill = {
-                      type: "pattern",
-                      pattern: "solid",
-                      fgColor: { argb: "fffff2cc" },
-                    }; // Light green background
-                  });
-                }
-                productRow1 = worksheet2.addRow({
-                  product_name: row.product_name,
-                  start_quantity: row.starting,
-                  restock: parseInt(row.restock),
-                  damaged: parseInt(row.damaged),
-                  releasing: parseInt(row.releasing),
-                  end_quantity: row.ending,
-                });
-
-                productRow1.eachCell({ includeEmpty: true }, (cell) => {
-                  cell.font = {
-                    size: 12,
-                  };
-                });
+              let opTotal = 0;
+              // Ensure OPresult is an array of expense objects
+              OPresult.forEach((online, index) => {
+                worksheet.addRow([
+                  online.name,
+                  "",
+                  "",
+                  parseInt(online.total_price),
+                ]);
+                opTotal += parseInt(online.total_price);
               });
 
-              worksheet2.addRow([""]);
-              worksheet2.addRow([""]);
-              worksheet2.addRow([""]);
-              worksheet2.addRow([""]);
-
-              testonly = worksheet2.addRow([
-                "BOXES",
-                "STARTING",
-                "RESTOCKED",
-                "DAMAGED",
-                "RELEASING",
-                "ENDING",
+              net = worksheet.addRow([
+                "NET SALES",
+                "",
+                "",
+                grossSales - expenseTotal - opTotal - discount,
               ]);
 
-              testonly.font = { bold: true, size: 14 }; // Bold, size 14, white font
-              testonly.height = 30;
-              testonly.alignment = { vertical: "middle", horizontal: "center" };
+              net.font = {
+                bold: true,
+                size: 18,
+              };
 
-              orderModel.getPackagingReports(req.body, (err, pResult) => {
+              worksheet.mergeCells(`A${net.number}:C${net.number}`);
+
+              orderModel.getStocksReports(req.body, (err, stockResult) => {
                 if (err) {
                   console.log(err);
                   res.status(500).send("Error fetching data");
                   return;
                 }
 
-                pResult.forEach((row) => {
-                  productRow2 = worksheet2.addRow({
-                    product_name: row.name,
-                    start_quantity: row.start_quantity,
+                let lastCategory1 = null;
+
+                // Add rows
+                stockResult.forEach((row) => {
+                  if (row.category_name !== lastCategory1) {
+                    categoryRow1 = worksheet2.addRow({
+                      product_name: row.category_name,
+                      start_quantity: "",
+                      end_quantity: "",
+                      releasing: "",
+                    });
+                    lastCategory1 = row.category_name;
+                    categoryRow1.getCell(1).font = {
+                      bold: true,
+                      size: 13,
+                    };
+                    categoryRow1.eachCell({ includeEmpty: true }, (cell) => {
+                      cell.fill = {
+                        type: "pattern",
+                        pattern: "solid",
+                        fgColor: { argb: "fffff2cc" },
+                      }; // Light green background
+                    });
+                  }
+                  productRow1 = worksheet2.addRow({
+                    product_name: row.product_name,
+                    start_quantity: row.starting,
                     restock: parseInt(row.restock),
                     damaged: parseInt(row.damaged),
                     releasing: parseInt(row.releasing),
-                    end_quantity: row.end_quantity,
+                    end_quantity: row.ending,
                   });
 
-                  productRow2.eachCell({ includeEmpty: true }, (cell) => {
+                  productRow1.eachCell({ includeEmpty: true }, (cell) => {
                     cell.font = {
                       size: 12,
                     };
                   });
                 });
 
-                res.setHeader(
-                  "Content-Type",
-                  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                );
-                res.setHeader(
-                  "Content-Disposition",
-                  "attachment; filename=exported-data.xlsx"
-                );
+                worksheet2.addRow([""]);
+                worksheet2.addRow([""]);
 
-                // Stream the Excel workbook to the response
-                workbook.xlsx
-                  .write(res)
-                  .then(() => {
-                    res.end();
-                  })
-                  .catch((error) => {
-                    console.log(error);
-                    res.status(500).send("Error exporting data to Excel");
+                testonly = worksheet2.addRow([
+                  "BOXES",
+                  "STARTING",
+                  "RESTOCKED",
+                  "DAMAGED",
+                  "RELEASING",
+                  "ENDING",
+                ]);
+
+                testonly.font = { bold: true, size: 14 }; // Bold, size 14, white font
+                testonly.height = 30;
+                testonly.alignment = {
+                  vertical: "middle",
+                  horizontal: "center",
+                };
+
+                orderModel.getPackagingReports(req.body, (err, pResult) => {
+                  if (err) {
+                    console.log(err);
+                    res.status(500).send("Error fetching data");
+                    return;
+                  }
+
+                  pResult.forEach((row) => {
+                    productRow2 = worksheet2.addRow({
+                      product_name: row.name,
+                      start_quantity: row.start_quantity,
+                      restock: parseInt(row.restock),
+                      damaged: parseInt(row.damaged),
+                      releasing: parseInt(row.releasing),
+                      end_quantity: row.end_quantity,
+                    });
+
+                    productRow2.eachCell({ includeEmpty: true }, (cell) => {
+                      cell.font = {
+                        size: 12,
+                      };
+                    });
                   });
+
+                  res.setHeader(
+                    "Content-Type",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  );
+                  res.setHeader(
+                    "Content-Disposition",
+                    "attachment; filename=exported-data.xlsx"
+                  );
+
+                  // Stream the Excel workbook to the response
+                  workbook.xlsx
+                    .write(res)
+                    .then(() => {
+                      res.end();
+                    })
+                    .catch((error) => {
+                      console.log(error);
+                      res.status(500).send("Error exporting data to Excel");
+                    });
+                });
               });
             });
           });

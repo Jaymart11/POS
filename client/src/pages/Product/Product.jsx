@@ -153,12 +153,14 @@ const Product = () => {
         columns={columns}
         dataSource={categoryData}
         loading={categoryLoading}
+        scroll={{ x: "max-content" }}
         expandable={{
           expandedRowRender: () => (
             <Table
               columns={productColumns}
               dataSource={productData}
               loading={productLoading}
+              scroll={{ x: "max-content" }}
               rowKey="id"
             />
           ),

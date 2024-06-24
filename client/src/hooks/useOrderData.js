@@ -32,6 +32,7 @@ export const useUpdateOrderData = () => {
   return useMutation(({ id, data }) => updateOrderData(id, data), {
     onSuccess: () => {
       queryClient.invalidateQueries("orderData");
+      queryClient.invalidateQueries("productData");
     },
   });
 };
@@ -42,6 +43,7 @@ export const useDeleteOrderData = () => {
   return useMutation((id) => deleteOrderData(id), {
     onSuccess: () => {
       queryClient.invalidateQueries("orderData");
+      queryClient.invalidateQueries("productData");
     },
   });
 };

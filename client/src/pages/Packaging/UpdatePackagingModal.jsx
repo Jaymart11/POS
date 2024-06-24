@@ -68,9 +68,6 @@ const UpdatePackagingModal = ({ visible, onCancel, packaging }) => {
           >
             <Input />
           </Form.Item>
-          <Form.Item name="quantity" label="Quantity">
-            <Input type="number" />
-          </Form.Item>
         </Form>
       </Modal>
     </>

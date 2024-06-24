@@ -2,7 +2,10 @@ const db = require("../database");
 
 class OrderModel {
   getAllOrders(callback) {
-    db.query("SELECT * FROM `orders`", callback);
+    db.query(
+      `SELECT o.id,o.total_price,o.total_items,o.discount, o.amount, ot.name AS order_type, CONCAT(u.first_name, " ", u.last_name) AS employee, pm.name AS payment_method, s.name as status, o.order_date  FROM orders o LEFT JOIN order_type ot ON o.order_type_id = ot.id LEFT JOIN user u ON o.user_id = u.id LEFT JOIN payment_method pm ON o.payment_method_id = pm.id LEFT JOIN status s ON o.status_id = s.id ORDER BY o.order_date DESC`,
+      callback
+    );
   }
 
   getOrderById(orderId, callback) {
@@ -117,12 +120,57 @@ class OrderModel {
 
   deleteOrder(orderId, callback) {
     db.query(
-      "DELETE FROM order_item WHERE order_id = ?",
+      "SELECT order_id, product_id, packaging_id, quantity FROM order_item WHERE order_id = ?",
       [orderId],
-      (err, result) => {
+      (err, orderResult) => {
         if (err) return callback(err);
-        db.query("DELETE FROM `orders` WHERE id = ?", [orderId], callback);
+        console.log(orderResult.length);
+        function updateProductAndPackaging(index) {
+          if (index >= orderResult.length) {
+            db.query(
+              "DELETE FROM order_item WHERE order_id = ?",
+              [orderId],
+              (err, result) => {
+                if (err) return callback(err);
+                db.query(
+                  "DELETE FROM orders WHERE id = ?",
+                  [orderId],
+                  callback
+                );
+              }
+            );
+            return;
+          }
+
+          const orderItem = orderResult[index];
+          db.query(
+            "UPDATE product SET product_quantity = product_quantity + ? WHERE id = ?",
+            [orderItem.quantity, orderItem.product_id],
+            (err) => {
+              if (err) return callback(err);
+
+              db.query(
+                "UPDATE packaging SET quantity = quantity + ? WHERE id = ?",
+                [orderItem.quantity, orderItem.packaging_id],
+                (err) => {
+                  if (err) return callback(err);
+
+                  updateProductAndPackaging(index + 1);
+                }
+              );
+            }
+          );
+        }
+
+        updateProductAndPackaging(0);
       }
+    );
+  }
+
+  getTotalDiscount({ date, user_id }, callback) {
+    db.query(
+      `SELECT SUM(discount) as discount from orders WHERE DATE(order_date) BETWEEN '${date[0]}' AND '${date[1]}' AND user_id = ${user_id}`,
+      callback
     );
   }
 
@@ -134,6 +182,10 @@ class OrderModel {
     p.id AS product_id,
     p.product_name,
     COALESCE(oi.price_at_order, 0) AS price,
+    CASE 
+      WHEN oi.price_at_order is null THEN COALESCE(p.price, 0)
+      ELSE oi.price_at_order
+    END AS price,
     COALESCE(SUM(oi.quantity * oi.price_at_order), 0) AS total_sales,
     COALESCE(SUM(oi.quantity), 0) AS total_quantity
     FROM 

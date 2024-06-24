@@ -21,6 +21,7 @@ export const useCreatePackagingData = () => {
   return useMutation(createPackagingData, {
     onSuccess: () => {
       queryClient.invalidateQueries("packagingData");
+      queryClient.invalidateQueries("productData");
     },
   });
 };
@@ -31,6 +32,7 @@ export const useUpdatePackagingData = () => {
   return useMutation(({ id, data }) => updatePackagingData(id, data), {
     onSuccess: () => {
       queryClient.invalidateQueries("packagingData");
+      queryClient.invalidateQueries("productData");
     },
   });
 };
@@ -41,6 +43,7 @@ export const useDeletePackagingData = () => {
   return useMutation((id) => deletePackagingData(id), {
     onSuccess: () => {
       queryClient.invalidateQueries("packagingData");
+      queryClient.invalidateQueries("productData");
     },
   });
 };
