@@ -169,7 +169,9 @@ class OrderModel {
 
   getTotalDiscount({ date, user_id }, callback) {
     db.query(
-      `SELECT SUM(discount) as discount from orders WHERE DATE(order_date) BETWEEN '${date[0]}' AND '${date[1]}' AND user_id = ${user_id}`,
+      `SELECT SUM(discount) as discount from orders WHERE DATE(order_date) BETWEEN '${
+        date[0]
+      }' AND '${date[1]}' ${user_id !== 0 ? "AND user_id =" + user_id : ""}`,
       callback
     );
   }
@@ -200,7 +202,9 @@ class OrderModel {
                 order_item oi 
                 INNER JOIN orders o ON oi.order_id = o.id 
             WHERE 
-                DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' AND o.user_id = ${user_id}
+                DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
+        user_id !== 0 ? "AND o.user_id =" + user_id : ""
+      }
         ) oi ON p.id = oi.product_id
     WHERE p.deleted_by is null
     GROUP BY 
@@ -229,7 +233,9 @@ class OrderModel {
       LEFT JOIN 
             category c ON c.id = n.category_id 
         WHERE
-            DATE(l.log_date) BETWEEN '${date[0]}' AND '${date[1]}' AND n.deleted_by IS NULL
+            DATE(l.log_date) BETWEEN '${date[0]}' AND '${
+        date[1]
+      }' AND n.deleted_by IS NULL
     ),
     MaxDates AS (
         SELECT
@@ -247,7 +253,9 @@ class OrderModel {
         LEFT JOIN 
             category c ON c.id = n.category_id 
         WHERE
-            DATE(l.log_date) BETWEEN '${date[0]}' AND '${date[1]}' AND n.deleted_by IS NULL
+            DATE(l.log_date) BETWEEN '${date[0]}' AND '${
+        date[1]
+      }' AND n.deleted_by IS NULL
     ),
     StartEndQuantities AS (
         SELECT
@@ -278,7 +286,9 @@ class OrderModel {
         LEFT JOIN 
             product p ON oi.product_id = p.id
         WHERE 
-            DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' AND o.user_id = ${user_id}
+            DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
+        user_id !== 0 ? "AND o.user_id =" + user_id : ""
+      }
         GROUP BY 
             p.id
     ),
@@ -290,7 +300,9 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            DATE(transaction_date) BETWEEN '${date[0]}' AND '${date[1]}' AND created_by = ${user_id}
+            DATE(transaction_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
+        user_id !== 0 ? "AND created_by =" + user_id : ""
+      }
         GROUP BY 
             product_id
     )
@@ -301,11 +313,18 @@ class OrderModel {
         seq.start_quantity as 'starting',
         COALESCE(sa.dmg_quantity, 0) AS damaged,
         COALESCE(sa.restk_quantity, 0) AS restock,
-      COALESCE(oq.total_quantity, 0) AS releasing,
-          CASE 
-            WHEN seq.end_quantity = 0 THEN COALESCE((SELECT product_quantity FROM product WHERE id = seq.product_id), 0)
-            ELSE seq.end_quantity 
-        END AS ending
+        COALESCE(oq.total_quantity, 0) AS releasing,
+        CASE
+            WHEN seq.end_quantity = 0 THEN ${
+              user_id !== 0
+                ? `(seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0)`
+                : `COALESCE((SELECT quantity FROM packaging WHERE id = seq.product_id), 0)`
+            }
+            ELSE ${
+              user_id !== 0
+                ? `(seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0)`
+                : `seq.end_quantity`
+            } END AS ending
     FROM
         StartEndQuantities seq
     LEFT JOIN
@@ -332,7 +351,9 @@ class OrderModel {
         LEFT JOIN
             packaging n ON l.packaging_id = n.id
         WHERE
-            DATE(l.log_date) BETWEEN '${date[0]}' AND '${date[1]}' AND n.deleted_by IS NULL
+            DATE(l.log_date) BETWEEN '${date[0]}' AND '${
+        date[1]
+      }' AND n.deleted_by IS NULL
     ),
     MaxDates AS (
         SELECT
@@ -346,7 +367,9 @@ class OrderModel {
         LEFT JOIN
             packaging n ON l.packaging_id = n.id
         WHERE
-            DATE(l.log_date) BETWEEN '${date[0]}' AND '${date[1]}' AND n.deleted_by IS NULL
+            DATE(l.log_date) BETWEEN '${date[0]}' AND '${
+        date[1]
+      }' AND n.deleted_by IS NULL
     ),
     StartEndQuantities AS (
         SELECT
@@ -375,7 +398,9 @@ class OrderModel {
         LEFT JOIN 
             packaging p ON oi.packaging_id = p.id
         WHERE 
-            DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' AND o.user_id = ${user_id}
+            DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
+        user_id !== 0 ? "AND o.user_id =" + user_id : ""
+      }
         GROUP BY 
             p.id
     ),
@@ -387,7 +412,9 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            DATE(transaction_date) BETWEEN '${date[0]}' AND '${date[1]}' AND created_by = ${user_id}
+            DATE(transaction_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
+        user_id !== 0 ? "AND created_by =" + user_id : ""
+      }
         GROUP BY 
             packaging_id
     )
@@ -396,10 +423,18 @@ class OrderModel {
         seq.start_quantity,
         COALESCE(sa.dmg_quantity, 0) AS damaged,
         COALESCE(sa.restk_quantity, 0) AS restock,
-      COALESCE(oq.total_quantity, 0) AS releasing,
-          CASE 
-            WHEN seq.end_quantity = 0 THEN COALESCE((SELECT quantity FROM packaging WHERE id = seq.packaging_id), 0)
-            ELSE seq.end_quantity 
+        COALESCE(oq.total_quantity, 0) AS releasing,
+        CASE 
+            WHEN seq.end_quantity = 0 THEN ${
+              user_id !== 0
+                ? `(seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0)`
+                : `COALESCE((SELECT quantity FROM packaging WHERE id = seq.packaging_id), 0)`
+            }
+            ELSE ${
+              user_id !== 0
+                ? `(seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0)`
+                : `seq.end_quantity`
+            }
         END AS end_quantity
     FROM
         StartEndQuantities seq

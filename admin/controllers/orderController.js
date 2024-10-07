@@ -85,7 +85,6 @@ exports.exportReport = (req, res) => {
       res.status(500).send("Error fetching data");
       return;
     }
-
     worksheet.addRow([""]);
 
     report = worksheet.addRow(["Sales Report"]);
@@ -99,7 +98,7 @@ exports.exportReport = (req, res) => {
 
     employee = worksheet.addRow([
       "Employee:",
-      `${emp[0].first_name} ${emp[0].last_name}`,
+      emp.length !== 0 ? `${emp[0].first_name} ${emp[0].last_name}` : "All",
     ]);
 
     employee.font = {
@@ -135,7 +134,7 @@ exports.exportReport = (req, res) => {
 
     employee2 = worksheet2.addRow([
       "Employee:",
-      `${emp[0].first_name} ${emp[0].last_name}`,
+      emp.length !== 0 ? `${emp[0].first_name} ${emp[0].last_name}` : "All",
     ]);
 
     employee2.font = {

@@ -23,23 +23,23 @@ const { RangePicker } = DatePicker;
 const rangePresets = [
   {
     label: "Today",
-    value: () => [dayjs(), dayjs().endOf("day")],
+    value: () => [dayjs().startOf("day"), dayjs().endOf("day")],
   },
   {
     label: "Last 7 Days",
-    value: [dayjs().add(-7, "d"), dayjs()],
+    value: [dayjs().startOf("day").add(-7, "d"), dayjs().endOf("day")],
   },
   {
     label: "Last 14 Days",
-    value: [dayjs().add(-14, "d"), dayjs()],
+    value: [dayjs().startOf("day").add(-14, "d"), dayjs().endOf("day")],
   },
   {
     label: "Last 30 Days",
-    value: [dayjs().add(-30, "d"), dayjs()],
+    value: [dayjs().startOf("day").add(-30, "d"), dayjs().endOf("day")],
   },
   {
     label: "Last 90 Days",
-    value: [dayjs().add(-90, "d"), dayjs()],
+    value: [dayjs().startOf("day").add(-90, "d"), dayjs().endOf("day")],
   },
 ];
 
@@ -54,8 +54,8 @@ const Report = () => {
   const onFinish = ({ date, user_id }) => {
     downloadReport({
       date: [
-        dayjs(date[0]).format("YYYY-MM-DD"),
-        dayjs(date[1]).format("YYYY-MM-DD"),
+        dayjs(date[0]).format("YYYY-MM-DD HH:mm:ss"),
+        dayjs(date[1]).format("YYYY-MM-DD HH:mm:ss"),
       ],
       user_id: user.access_level == 2 ? user.id : user_id,
     });
@@ -143,13 +143,6 @@ const Report = () => {
       key: "action",
       render: (_, record) => (
         <Space size="middle">
-          {/* <Button
-            type="primary"
-            onClick={() => showUpdateModal(record)}
-            disabled={!isToday(new Date(record.transaction_date))}
-          >
-            Update
-          </Button> */}
           <Popconfirm
             title="Delete the stock"
             description="Are you sure to delete this stock?"
@@ -186,6 +179,8 @@ const Report = () => {
             >
               <RangePicker
                 style={{ width: "100%" }}
+                showTime={{ format: "HH:mm" }}
+                format="YYYY-MM-DD HH:mm"
                 presets={rangePresets}
                 disabledDate={(current) =>
                   current && current > dayjs().endOf("day")
@@ -209,10 +204,13 @@ const Report = () => {
                   showSearch
                   filterOption={filterOption}
                   loading={isLoading}
-                  options={data?.map((val) => ({
-                    label: val.first_name + " " + val.last_name,
-                    value: val.id,
-                  }))}
+                  options={[
+                    { label: "All", value: 0 },
+                    ...(data?.map((val) => ({
+                      label: `${val.first_name} ${val.last_name}`,
+                      value: val.id,
+                    })) || []),
+                  ]}
                 />
               </Form.Item>
             </Col>

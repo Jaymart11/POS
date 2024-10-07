@@ -11,14 +11,22 @@ class ExpenseModel {
 
   getTotalExpenses(data, callback) {
     db.query(
-      `SELECT  id, name, amount FROM expense WHERE DATE(expense_date) BETWEEN '${data.date[0]}' AND '${data.date[1]}' AND created_by = ${data.user_id}`,
+      `SELECT  id, name, amount FROM expense WHERE DATE(expense_date) BETWEEN '${
+        data.date[0]
+      }' AND '${data.date[1]}' ${
+        data.user_id !== 0 ? "AND created_by =" + data.user_id : ""
+      }`,
       callback
     );
   }
 
   getOnlinePayment(data, callback) {
     db.query(
-      `SELECT pm.id AS payment_method_id, pm.name, COALESCE(SUM(o.total_price), 0) AS total_price FROM payment_method pm LEFT JOIN orders o ON pm.id = o.payment_method_id AND DATE(o.order_date) BETWEEN '${data.date[0]}' AND '${data.date[1]}' AND o.user_id = ${data.user_id} WHERE pm.id != 1 GROUP BY pm.id, pm.name`,
+      `SELECT pm.id AS payment_method_id, pm.name, COALESCE(SUM(o.total_price), 0) AS total_price FROM payment_method pm LEFT JOIN orders o ON pm.id = o.payment_method_id AND DATE(o.order_date) BETWEEN '${
+        data.date[0]
+      }' AND '${data.date[1]}' ${
+        data.user_id !== 0 ? "AND o.user_id =" + data.user_id : ""
+      } WHERE pm.id != 1 GROUP BY pm.id, pm.name`,
       callback
     );
   }
