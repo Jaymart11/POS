@@ -8,6 +8,7 @@ const db = mysql.createConnection(config.database);
 db.connect((err) => {
   if (err) {
     console.error("Error connecting to database: " + err.stack);
+    db.destroy();
     return;
   }
   console.log("Connected to database as id " + db.threadId);
