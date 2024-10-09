@@ -305,24 +305,68 @@ class OrderModel {
       }
         GROUP BY 
             product_id
-    )
+    ),    
+  OrderQuantitiesBefore AS (
+      SELECT
+          p.id AS product_id,
+          COALESCE(SUM(oi.quantity), 0) AS total_quantity
+      FROM
+          orders o
+      LEFT JOIN
+          order_item oi ON o.id = oi.order_id
+      LEFT JOIN
+          product p ON oi.product_id = p.id
+      WHERE
+        o.order_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
+      GROUP BY
+          p.id
+  ),
+  StockAdjustmentsBefore AS (
+      SELECT
+          product_id,
+          COALESCE(SUM(CASE WHEN type = 'damaged' THEN quantity ELSE 0 END), 0) AS dmg_quantity,
+          COALESCE(SUM(CASE WHEN type = 'restock' THEN quantity ELSE 0 END), 0) AS restk_quantity
+      FROM
+          stock_adjustments
+      WHERE
+        transaction_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
+      GROUP BY
+          product_id
+  ),
+  StartQuantity AS (
+		SELECT
+		  seq.category_id,
+          seq.product_id,
+		  (seq.start_quantity + COALESCE(sab.restk_quantity, 0)) - COALESCE(sab.dmg_quantity, 0) - COALESCE(oqb.total_quantity, 0) AS startingBefore
+	  FROM
+		  StartEndQuantities seq
+	  LEFT JOIN
+		  OrderQuantitiesBefore oqb ON seq.product_id = oqb.product_id
+	  LEFT JOIN
+		  StockAdjustmentsBefore sab ON sab.product_id = seq.product_id
+	  ORDER BY
+		  seq.category_id
+  )
     SELECT
         seq.category_id,
         seq.category_name,
         seq.start_name as product_name,
-        seq.start_quantity as 'starting',
+        sq.startingBefore as 'starting',
         COALESCE(sa.dmg_quantity, 0) AS damaged,
         COALESCE(sa.restk_quantity, 0) AS restock,
         COALESCE(oq.total_quantity, 0) AS releasing,
-        (seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0) AS ending
+        (sq.startingBefore + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0) AS ending
+        
     FROM
         StartEndQuantities seq
     LEFT JOIN
         OrderQuantities oq ON seq.product_id = oq.product_id
-    LEFT JOIN 
+    LEFT JOIN
         StockAdjustments sa ON sa.product_id = seq.product_id
-    ORDER BY 
-        seq.category_id`,
+    LEFT JOIN
+        StartQuantity sq ON sq.product_id = seq.product_id
+    ORDER BY
+      seq.category_id`,
       callback
     );
   }
@@ -407,10 +451,48 @@ class OrderModel {
       }
         GROUP BY 
             packaging_id
+    ),
+    OrderQuantitiesBefore AS (
+        SELECT 
+            p.id AS packaging_id,
+            COALESCE(SUM(oi.quantity), 0) AS total_quantity
+        FROM 
+            orders o
+        LEFT JOIN 
+            order_item oi ON o.id = oi.order_id
+        LEFT JOIN 
+            packaging p ON oi.packaging_id = p.id
+        WHERE 
+            o.order_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
+        GROUP BY 
+            p.id
+    ),
+    StockAdjustmentsBefore AS (
+        SELECT 
+            packaging_id, 
+            COALESCE(SUM(CASE WHEN type = 'damaged' THEN quantity ELSE 0 END), 0) AS dmg_quantity,
+            COALESCE(SUM(CASE WHEN type = 'restock' THEN quantity ELSE 0 END), 0) AS restk_quantity
+        FROM 
+            stock_adjustments 
+        WHERE 
+            transaction_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
+        GROUP BY 
+            packaging_id
+    ),
+    StartQuantity AS (
+      SELECT
+          seq.packaging_id,
+          (seq.start_quantity + COALESCE(sab.restk_quantity, 0)) - COALESCE(sab.dmg_quantity, 0) - COALESCE(oqb.total_quantity, 0) AS starting_before
+      FROM
+          StartEndQuantities seq
+      LEFT JOIN
+          OrderQuantitiesBefore oqb ON seq.packaging_id = oqb.packaging_id
+      LEFT JOIN 
+          StockAdjustmentsBefore sab ON sab.packaging_id = seq.packaging_id
     )
     SELECT
         seq.start_name as name,
-        seq.start_quantity,
+        sq.starting_before as start_quantity,
         COALESCE(sa.dmg_quantity, 0) AS damaged,
         COALESCE(sa.restk_quantity, 0) AS restock,
         COALESCE(oq.total_quantity, 0) AS releasing,
@@ -420,7 +502,9 @@ class OrderModel {
     LEFT JOIN
         OrderQuantities oq ON seq.packaging_id = oq.packaging_id
     LEFT JOIN 
-        StockAdjustments sa ON sa.packaging_id = seq.packaging_id`,
+        StockAdjustments sa ON sa.packaging_id = seq.packaging_id
+    LEFT JOIN 
+        StartQuantity sq ON sq.packaging_id = seq.packaging_id`,
       callback
     );
   }

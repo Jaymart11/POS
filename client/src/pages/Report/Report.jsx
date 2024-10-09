@@ -179,8 +179,8 @@ const Report = () => {
             >
               <RangePicker
                 style={{ width: "100%" }}
-                showTime={{ format: "HH:mm" }}
-                format="YYYY-MM-DD HH:mm"
+                showTime={{ format: "hh:mm A" }}
+                format="YYYY-MM-DD hh:mm A"
                 presets={rangePresets}
                 disabledDate={(current) =>
                   current && current > dayjs().endOf("day")
