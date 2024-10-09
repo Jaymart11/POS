@@ -314,17 +314,7 @@ class OrderModel {
         COALESCE(sa.dmg_quantity, 0) AS damaged,
         COALESCE(sa.restk_quantity, 0) AS restock,
         COALESCE(oq.total_quantity, 0) AS releasing,
-        CASE
-            WHEN seq.end_quantity = 0 THEN ${
-              user_id !== 0
-                ? `(seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0)`
-                : `COALESCE((SELECT quantity FROM packaging WHERE id = seq.product_id), 0)`
-            }
-            ELSE ${
-              user_id !== 0
-                ? `(seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0)`
-                : `seq.end_quantity`
-            } END AS ending
+        (seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0) AS ending
     FROM
         StartEndQuantities seq
     LEFT JOIN
@@ -424,18 +414,7 @@ class OrderModel {
         COALESCE(sa.dmg_quantity, 0) AS damaged,
         COALESCE(sa.restk_quantity, 0) AS restock,
         COALESCE(oq.total_quantity, 0) AS releasing,
-        CASE 
-            WHEN seq.end_quantity = 0 THEN ${
-              user_id !== 0
-                ? `(seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0)`
-                : `COALESCE((SELECT quantity FROM packaging WHERE id = seq.packaging_id), 0)`
-            }
-            ELSE ${
-              user_id !== 0
-                ? `(seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0)`
-                : `seq.end_quantity`
-            }
-        END AS end_quantity
+        (seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0) AS end_quantity
     FROM
         StartEndQuantities seq
     LEFT JOIN
