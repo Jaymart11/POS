@@ -169,7 +169,7 @@ class OrderModel {
 
   getTotalDiscount({ date, user_id }, callback) {
     db.query(
-      `SELECT SUM(discount) as discount from orders WHERE DATE(order_date) BETWEEN '${
+      `SELECT SUM(discount) as discount from orders WHERE order_date BETWEEN '${
         date[0]
       }' AND '${date[1]}' ${user_id !== 0 ? "AND user_id =" + user_id : ""}`,
       callback
@@ -202,7 +202,7 @@ class OrderModel {
                 order_item oi 
                 INNER JOIN orders o ON oi.order_id = o.id 
             WHERE 
-                DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
+                o.order_date BETWEEN '${date[0]}' AND '${date[1]}' ${
         user_id !== 0 ? "AND o.user_id =" + user_id : ""
       }
         ) oi ON p.id = oi.product_id
@@ -233,9 +233,9 @@ class OrderModel {
       LEFT JOIN 
             category c ON c.id = n.category_id 
         WHERE
-            DATE(l.log_date) BETWEEN '${date[0]}' AND '${
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
         date[1]
-      }' AND n.deleted_by IS NULL
+      }') AND n.deleted_by IS NULL
     ),
     MaxDates AS (
         SELECT
@@ -253,9 +253,9 @@ class OrderModel {
         LEFT JOIN 
             category c ON c.id = n.category_id 
         WHERE
-            DATE(l.log_date) BETWEEN '${date[0]}' AND '${
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
         date[1]
-      }' AND n.deleted_by IS NULL
+      }') AND n.deleted_by IS NULL
     ),
     StartEndQuantities AS (
         SELECT
@@ -286,8 +286,8 @@ class OrderModel {
         LEFT JOIN 
             product p ON oi.product_id = p.id
         WHERE 
-            DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
-        user_id !== 0 ? "AND o.user_id =" + user_id : ""
+            o.order_date BETWEEN '${date[0]}' AND '${date[1]}' ${
+        user_id !== 0 ? "AND o.user_id = " + user_id : ""
       }
         GROUP BY 
             p.id
@@ -300,8 +300,8 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            DATE(transaction_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
-        user_id !== 0 ? "AND created_by =" + user_id : ""
+            transaction_date BETWEEN '${date[0]}' AND '${date[1]}' ${
+        user_id !== 0 ? "AND created_by = " + user_id : ""
       }
         GROUP BY 
             product_id
@@ -341,9 +341,9 @@ class OrderModel {
         LEFT JOIN
             packaging n ON l.packaging_id = n.id
         WHERE
-            DATE(l.log_date) BETWEEN '${date[0]}' AND '${
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
         date[1]
-      }' AND n.deleted_by IS NULL
+      }') AND n.deleted_by IS NULL
     ),
     MaxDates AS (
         SELECT
@@ -357,9 +357,9 @@ class OrderModel {
         LEFT JOIN
             packaging n ON l.packaging_id = n.id
         WHERE
-            DATE(l.log_date) BETWEEN '${date[0]}' AND '${
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
         date[1]
-      }' AND n.deleted_by IS NULL
+      }') AND n.deleted_by IS NULL
     ),
     StartEndQuantities AS (
         SELECT
@@ -388,7 +388,7 @@ class OrderModel {
         LEFT JOIN 
             packaging p ON oi.packaging_id = p.id
         WHERE 
-            DATE(o.order_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
+            o.order_date BETWEEN '${date[0]}' AND '${date[1]}' ${
         user_id !== 0 ? "AND o.user_id =" + user_id : ""
       }
         GROUP BY 
@@ -402,7 +402,7 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            DATE(transaction_date) BETWEEN '${date[0]}' AND '${date[1]}' ${
+            transaction_date BETWEEN '${date[0]}' AND '${date[1]}' ${
         user_id !== 0 ? "AND created_by =" + user_id : ""
       }
         GROUP BY 

@@ -205,7 +205,7 @@ exports.exportReport = (req, res) => {
           return;
         }
 
-        const discount = parseInt(discountRes[0].discount);
+        const discount = parseInt(discountRes[0].discount || 0);
 
         orderModel.getReports(req.body, (err, result) => {
           if (err) {
