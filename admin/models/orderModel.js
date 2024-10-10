@@ -429,7 +429,6 @@ class OrderModel {
             packaging p ON oi.packaging_id = p.id
         WHERE 
             o.order_date BETWEEN '${date[0]}' AND '${date[1]}'
-      }
         GROUP BY 
             p.id
     ),
@@ -442,7 +441,6 @@ class OrderModel {
             stock_adjustments 
         WHERE 
             transaction_date BETWEEN '${date[0]}' AND '${date[1]}'
-      }
         GROUP BY 
             packaging_id
     ),
