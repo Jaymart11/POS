@@ -132,15 +132,15 @@ exports.exportReport = (req, res) => {
 
     worksheet2.addRow([""]);
 
-    employee2 = worksheet2.addRow([
-      "Employee:",
-      emp.length !== 0 ? `${emp[0].first_name} ${emp[0].last_name}` : "All",
-    ]);
+    // employee2 = worksheet2.addRow([
+    //   "Employee:",
+    //   emp.length !== 0 ? `${emp[0].first_name} ${emp[0].last_name}` : "All",
+    // ]);
 
-    employee2.font = {
-      bold: true,
-      size: 13,
-    };
+    // employee2.font = {
+    //   bold: true,
+    //   size: 13,
+    // };
 
     date2 = worksheet2.addRow([
       "Date:",

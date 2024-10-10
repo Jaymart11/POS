@@ -371,7 +371,7 @@ class OrderModel {
     );
   }
 
-  getPackagingReports({ date, user_id }, callback) {
+  getPackagingReports({ date }, callback) {
     db.query(
       `WITH MinDates AS (
         SELECT
@@ -385,9 +385,7 @@ class OrderModel {
         LEFT JOIN
             packaging n ON l.packaging_id = n.id
         WHERE
-            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
-        date[1]
-      }') AND n.deleted_by IS NULL
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${date[1]}') AND n.deleted_by IS NULL
     ),
     MaxDates AS (
         SELECT
@@ -401,9 +399,7 @@ class OrderModel {
         LEFT JOIN
             packaging n ON l.packaging_id = n.id
         WHERE
-            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
-        date[1]
-      }') AND n.deleted_by IS NULL
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${date[1]}') AND n.deleted_by IS NULL
     ),
     StartEndQuantities AS (
         SELECT
@@ -432,8 +428,7 @@ class OrderModel {
         LEFT JOIN 
             packaging p ON oi.packaging_id = p.id
         WHERE 
-            o.order_date BETWEEN '${date[0]}' AND '${date[1]}' ${
-        user_id !== 0 ? "AND o.user_id =" + user_id : ""
+            o.order_date BETWEEN '${date[0]}' AND '${date[1]}'
       }
         GROUP BY 
             p.id
@@ -446,8 +441,7 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            transaction_date BETWEEN '${date[0]}' AND '${date[1]}' ${
-        user_id !== 0 ? "AND created_by =" + user_id : ""
+            transaction_date BETWEEN '${date[0]}' AND '${date[1]}'
       }
         GROUP BY 
             packaging_id

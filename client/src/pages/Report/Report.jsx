@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import { useUserData } from "../../hooks/useUserData";
 import { downloadReport } from "../../services/orderService";
 import { useDeleteOrderData, useOrderData } from "../../hooks/useOrderData";
-import { format, isToday } from "date-fns";
+import { isToday } from "date-fns";
 import useNotification from "../../hooks/useNotification";
 
 const { RangePicker } = DatePicker;
@@ -121,7 +121,9 @@ const Report = () => {
       render: (_, record) => (
         <Space size="middle">
           <Typography>
-            {format(new Date(record.order_date), "MMM dd, yyyy | hh:mm a")}
+            {dayjs(record.order_date.slice(0, -1)).format(
+              "MMM DD, YYYY | hh:mm A"
+            )}
           </Typography>
         </Space>
       ),
