@@ -243,22 +243,27 @@ const OrderList = () => {
           </Form.Item>
 
           <Form.Item
-            label="Total Payment"
+            label={<span style={{ fontSize: "30px" }}>Total Payment</span>}
             style={{
               textAlign: "right",
               fontWeight: "bold",
             }}
           >
-            PHP {totalPayment() - order.discount}
+            <span style={{ fontSize: "30px" }}>
+              PHP {totalPayment() - order.discount}
+            </span>
           </Form.Item>
           {change <= 0 || !change ? (
             ""
           ) : (
             <Form.Item
-              label="Change"
-              style={{ textAlign: "right", fontWeight: "bold" }}
+              label={<span style={{ fontSize: "30px" }}>Change</span>}
+              style={{
+                textAlign: "right",
+                fontWeight: "bold",
+              }}
             >
-              PHP {change}
+              <span style={{ fontSize: "30px" }}>PHP {change}</span>
             </Form.Item>
           )}
           <Form.Item>
