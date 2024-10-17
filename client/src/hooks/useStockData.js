@@ -42,7 +42,7 @@ export const useUpdateStockData = () => {
 // Delete
 export const useDeleteStockData = () => {
   const queryClient = useQueryClient();
-  return useMutation((id) => deleteStockData(id), {
+  return useMutation(({ id, data }) => deleteStockData(id, data), {
     onSuccess: () => {
       queryClient.invalidateQueries("stockData");
       queryClient.invalidateQueries("productData");

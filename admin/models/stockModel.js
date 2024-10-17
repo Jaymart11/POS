@@ -4,7 +4,7 @@ const db = require("../database");
 class StockModel {
   getAllStocks(callback) {
     db.query(
-      "select sa.id, sa.product_id, p.product_name, sa.quantity, pc.id as packaging_id, pc.name as packaging_name, sa.type, sa.transaction_date, sa.updated_at, CONCAT(u1.first_name, ' ', u1.last_name) as created_by, CONCAT(u2.first_name, ' ', u2.last_name) AS updated_by from stock_adjustments sa left join product as p on sa.product_id = p.id left join packaging pc on sa.packaging_id = pc.id left join user u1 on sa.created_by = u1.id left join user u2 on sa.updated_by = u2.id order by sa.transaction_date desc",
+      "select sa.id, sa.product_id, p.product_name, sa.quantity, pc.id as packaging_id, pc.name as packaging_name, sa.type, sa.transaction_date, sa.updated_at, CONCAT(u1.first_name, ' ', u1.last_name) as created_by, CONCAT(u2.first_name, ' ', u2.last_name) AS updated_by, CONCAT(u3.first_name, ' ', u3.last_name) as deleted_by, sa.deleted_at from stock_adjustments sa left join product as p on sa.product_id = p.id left join packaging pc on sa.packaging_id = pc.id left join user u1 on sa.created_by = u1.id left join user u2 on sa.updated_by = u2.id left join user u3 on sa.deleted_by = u3.id order by sa.transaction_date desc",
       callback
     );
   }
@@ -120,7 +120,7 @@ class StockModel {
     );
   }
 
-  deleteStock(stockId, callback) {
+  deleteStock(stockId, stockData, callback) {
     // Fetch the expense details to determine if it's associated with a product or packaging
     db.query(
       "SELECT * FROM stock_adjustments WHERE id = ?",
@@ -142,8 +142,8 @@ class StockModel {
 
         // Delete the expense
         db.query(
-          "DELETE FROM stock_adjustments WHERE id = ?",
-          [stockId],
+          "UPDATE stock_adjustments SET ? WHERE id = ?",
+          [stockData, stockId],
           (deleteErr, deleteResult) => {
             if (deleteErr) {
               console.error("Failed to delete stock_adjustments:", deleteErr);

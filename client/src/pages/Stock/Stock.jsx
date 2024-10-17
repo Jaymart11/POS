@@ -15,6 +15,7 @@ const Stock = () => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   const [currentStock, setCurrentStock] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const showCreateModal = () => {
     setIsCreateModalVisible(true);
@@ -32,7 +33,13 @@ const Stock = () => {
   };
 
   const confirmDelete = (id) => {
-    mutate(id);
+    mutate({
+      id,
+      data: {
+        deleted_by: user.id,
+        deleted_at: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+      },
+    });
 
     openNotificationWithIcon(
       "success",
@@ -66,14 +73,27 @@ const Stock = () => {
       title: "Updated By",
       dataIndex: "updated_by",
       key: "updated_by",
+      render: (_, record) => (
+        <Typography
+          style={{ color: record.deleted_by != null ? "red" : "white" }}
+        >
+          {record.deleted_by || record.updated_by}
+        </Typography>
+      ),
     },
     {
       title: "Date",
       render: (_, record) => (
         <Space size="middle">
-          <Typography>
+          <Typography
+            style={{ color: record.deleted_by != null ? "red" : "white" }}
+          >
             {format(
-              new Date(record.updated_at || record.transaction_date),
+              new Date(
+                record.deleted_at ||
+                  record.updated_at ||
+                  record.transaction_date
+              ),
               "MMM dd, yyyy | hh:mm a"
             )}
           </Typography>
@@ -102,31 +122,35 @@ const Stock = () => {
     {
       title: "Action",
       key: "action",
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="primary"
-            onClick={() => showUpdateModal(record)}
-            disabled={!isToday(new Date(record.transaction_date))}
-          >
-            Update
-          </Button>
-          <Popconfirm
-            title="Delete the stock"
-            description="Are you sure to delete this stock?"
-            onConfirm={() => confirmDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
+      render: (_, record) => {
+        return record.deleted_by != null ? (
+          <b style={{ color: "red" }}>VOIDED</b>
+        ) : (
+          <Space size="middle">
             <Button
-              danger
+              type="primary"
+              onClick={() => showUpdateModal(record)}
               disabled={!isToday(new Date(record.transaction_date))}
             >
-              Delete
+              Update
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+            <Popconfirm
+              title="Delete the stock"
+              description="Are you sure to delete this stock?"
+              onConfirm={() => confirmDelete(record.id)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button
+                danger
+                disabled={!isToday(new Date(record.transaction_date))}
+              >
+                Void
+              </Button>
+            </Popconfirm>
+          </Space>
+        );
+      },
     },
   ];
 

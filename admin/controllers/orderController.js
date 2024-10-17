@@ -61,8 +61,10 @@ exports.updateOrder = (req, res) => {
 
 exports.deleteOrder = (req, res) => {
   const orderId = req.params.id;
-  orderModel.deleteOrder(orderId, (err, result) => {
+  const orderData = req.body;
+  orderModel.deleteOrder(orderId, orderData, (err, result) => {
     if (err) {
+      console.log(err);
       res.status(500).json({ error: "Internal server error" });
       return;
     }

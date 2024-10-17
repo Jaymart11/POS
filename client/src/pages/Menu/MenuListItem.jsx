@@ -13,7 +13,7 @@ const MenuListItem = ({ item }) => {
     addItemToOrder({
       product_id: item.id,
       name: item.product_name,
-      packaging_id: item.packaging_id,
+      packaging_details: item.packaging_details,
       price_at_order: item.price,
     });
   };
@@ -21,18 +21,25 @@ const MenuListItem = ({ item }) => {
   const currentQuantity =
     orderItem?.filter((or) => or.product_id === item.id)?.[0]?.quantity || 0;
 
-  const total_packaging = totalPackagingItem()[item.packaging_id]
-    ? item.quantity - totalPackagingItem()[item.packaging_id]
-    : item.quantity;
+  const total_packaging = item.packaging_details.map((pd) => ({
+    ...pd,
+    quantity: totalPackagingItem()[pd.packaging_id]
+      ? pd.quantity - totalPackagingItem()[pd.packaging_id]
+      : pd.quantity,
+  }));
 
   const qtyStatus = () => {
     const remainingQuantity = item.product_quantity - currentQuantity;
 
-    if (remainingQuantity === 0 || total_packaging === 0) {
+    if (
+      remainingQuantity === 0 ||
+      total_packaging.some((tp) => tp.quantity === 0)
+    ) {
       return "rgb(194, 64, 52)";
     } else if (
       (remainingQuantity >= 1 && remainingQuantity <= 5) ||
-      (total_packaging >= 1 && total_packaging <= 5)
+      (total_packaging.some((tp) => tp.quantity >= 1) &&
+        total_packaging.some((tp) => tp.quantity <= 5))
     ) {
       return "rgb(245, 199, 17)";
     } else {
@@ -52,9 +59,12 @@ const MenuListItem = ({ item }) => {
   };
 
   const packagingStatus = () => {
-    if (total_packaging > 5) {
+    if (total_packaging.some((tp) => tp.quantity > 5)) {
       return "white";
-    } else if (total_packaging >= 1 && total_packaging <= 5) {
+    } else if (
+      total_packaging.some((tp) => tp.quantity >= 1) &&
+      total_packaging.some((tp) => tp.quantity <= 5)
+    ) {
       return "rgb(245, 199, 17)";
     } else {
       return "rgb(194,64,52)";
@@ -72,7 +82,8 @@ const MenuListItem = ({ item }) => {
             borderLeft: `5px solid ${qtyStatus()}`,
           }}
           onClick={
-            item.product_quantity - currentQuantity > 0 && total_packaging > 0
+            item.product_quantity - currentQuantity > 0 &&
+            !total_packaging.some((tp) => tp.quantity === 0)
               ? handleAdd
               : null
           }
@@ -84,7 +95,7 @@ const MenuListItem = ({ item }) => {
           <Title
             type="success"
             level={5}
-            style={{ margin: " 0 0 20px 0", color: "rgb(40,128,99)" }}
+            style={{ margin: " 0 0 0 0", color: "rgb(40,128,99)" }}
           >
             PHP {item.price}{" "}
           </Title>
@@ -93,8 +104,20 @@ const MenuListItem = ({ item }) => {
               <Text style={{ margin: 0, color: productStatus() }}>
                 Qty: {item.product_quantity - currentQuantity}
               </Text>
+              <Text style={{ margin: 0, color: productStatus() }}>
+                <br />
+                <b>Pkg Qty</b>
+              </Text>
+
               <Text style={{ margin: 0, color: packagingStatus() }}>
-                Pkg Qty: {total_packaging}
+                {total_packaging.map((tp, index) => {
+                  return (
+                    <span key={index}>
+                      {tp.packaging_name} : {tp.quantity}
+                      <br />
+                    </span>
+                  );
+                })}
               </Text>
             </Flex>
             <Badge
@@ -104,7 +127,7 @@ const MenuListItem = ({ item }) => {
               color="rgb(245, 199, 17)"
               style={{
                 position: "absolute",
-                top: -130,
+                top: -135,
                 right: -30,
                 fontWeight: "bold",
                 display: currentQuantity > 0 ? "" : "none",

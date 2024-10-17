@@ -1,8 +1,9 @@
-import { Modal, Form, Input, Select } from "antd";
+import { Modal, Form, Input, Select, Button } from "antd";
 import { useCreateProductData } from "../../hooks/useProductData";
 import { useCategoryData } from "../../hooks/useCategoryData";
 import { usePackagingData } from "../../hooks/usePackagingData";
 import useNotification from "../../hooks/useNotification";
+import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 
 const CreateProductModal = ({ visible, onCancel, setCurrentCategory }) => {
   const { mutate, isLoading } = useCreateProductData();
@@ -43,7 +44,14 @@ const CreateProductModal = ({ visible, onCancel, setCurrentCategory }) => {
         confirmLoading={isLoading}
         centered={true}
       >
-        <Form form={form} layout="vertical" name="create_product">
+        <Form
+          form={form}
+          layout="vertical"
+          name="create_product"
+          initialValues={{
+            packaging: [{}], // Add one default packaging field
+          }}
+        >
           <Form.Item
             name="code"
             label="Code"
@@ -81,7 +89,7 @@ const CreateProductModal = ({ visible, onCancel, setCurrentCategory }) => {
               }))}
             />
           </Form.Item>
-          <Form.Item
+          {/* <Form.Item
             name="packaging_id"
             label="Packaging"
             rules={[
@@ -97,7 +105,65 @@ const CreateProductModal = ({ visible, onCancel, setCurrentCategory }) => {
                 value: pack.id,
               }))}
             />
-          </Form.Item>
+          </Form.Item> */}
+          <Form.List name="packaging">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map((field) => (
+                  <Form.Item
+                    label={
+                      <>
+                        Packaging {field.name + 1} &nbsp;&nbsp;
+                        <MinusCircleOutlined
+                          style={{ color: "red" }}
+                          onClick={() => remove(field.name)}
+                        />
+                      </>
+                    }
+                    required={false}
+                    key={field.key}
+                  >
+                    <Form.Item
+                      {...field}
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select a packaging!",
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <Select
+                        options={packData
+                          ?.filter(
+                            (item) =>
+                              !form
+                                .getFieldValue(["packaging"])
+                                .includes(item.id)
+                          )
+                          ?.map((pack) => ({
+                            label: pack.name,
+                            value: pack.id,
+                          }))}
+                      />
+                    </Form.Item>
+                  </Form.Item>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => {
+                      add();
+                    }}
+                    style={{ width: "100%" }}
+                    icon={<PlusOutlined />}
+                  >
+                    Add packaging field
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
     </>

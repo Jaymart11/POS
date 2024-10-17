@@ -11,7 +11,22 @@ exports.getAllProducts = (req, res) => {
       res.status(500).json({ error: "Internal server error" });
       return;
     }
-    res.json(products);
+
+    const result = products.reduce(
+      (acc, { id, packaging_id, packaging_name, quantity, ...rest }) => {
+        acc[id] = acc[id] || { ...rest, id, packaging_details: [] };
+        acc[id].packaging_details.push({
+          packaging_id,
+          packaging_name,
+          quantity,
+        });
+        return acc;
+      },
+      {}
+    );
+
+    const finalArray = Object.values(result);
+    res.json(finalArray);
   });
 };
 
@@ -75,7 +90,8 @@ exports.updateProduct = (req, res) => {
 
 exports.deleteProduct = (req, res) => {
   const productId = req.params.id;
-  productModel.deleteProduct(productId, (err, result) => {
+  let productData = req.body;
+  productModel.deleteProduct(productId, productData, (err, result) => {
     if (err) {
       console.error(err);
       res.status(500).json({ error: "Internal server error" });
@@ -85,6 +101,6 @@ exports.deleteProduct = (req, res) => {
       res.status(404).json({ error: "Product not found" });
       return;
     }
-    res.json({ message: "Product deleted successfully" });
+    res.json({ message: "Product updated successfully" });
   });
 };

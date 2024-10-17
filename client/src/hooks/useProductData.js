@@ -41,7 +41,7 @@ export const useUpdateProductData = () => {
 // Delete
 export const useDeleteProductData = () => {
   const queryClient = useQueryClient();
-  return useMutation((id) => deleteProductData(id), {
+  return useMutation(({ id, data }) => deleteProductData(id, data), {
     onSuccess: () => {
       queryClient.invalidateQueries("productData");
     },

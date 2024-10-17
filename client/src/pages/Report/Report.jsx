@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import { useUserData } from "../../hooks/useUserData";
 import { downloadReport } from "../../services/orderService";
 import { useDeleteOrderData, useOrderData } from "../../hooks/useOrderData";
-import { isToday } from "date-fns";
+import { isToday, format } from "date-fns";
 import useNotification from "../../hooks/useNotification";
 
 const { RangePicker } = DatePicker;
@@ -65,7 +65,14 @@ const Report = () => {
     (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
 
   const confirmDelete = (id) => {
-    mutate(id);
+    mutate({
+      id,
+      data: {
+        deleted_by: user.id,
+        deleted_at: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+        status_id: 2,
+      },
+    });
 
     openNotificationWithIcon(
       "success",
@@ -117,13 +124,31 @@ const Report = () => {
       ),
     },
     {
-      title: "Date Ordered",
+      title: "Date Ordered / Deleted",
       render: (_, record) => (
         <Space size="middle">
-          <Typography>
-            {dayjs(record.order_date.slice(0, -1)).format(
-              "MMM DD, YYYY | hh:mm A"
-            )}
+          <Typography
+            style={{ color: record.deleted_by != null ? "red" : "white" }}
+          >
+            {record.deleted_by === null
+              ? dayjs(record.order_date.slice(0, -1)).format(
+                  "MMM DD, YYYY | hh:mm A"
+                )
+              : dayjs(record.deleted_at.slice(0, -1)).format(
+                  "MMM DD, YYYY | hh:mm A"
+                )}
+          </Typography>
+        </Space>
+      ),
+    },
+    {
+      title: "Updated by",
+      render: (_, record) => (
+        <Space size="middle">
+          <Typography
+            style={{ color: record.deleted_by != null ? "red" : "white" }}
+          >
+            {record.deleted_by}
           </Typography>
         </Space>
       ),
@@ -152,8 +177,14 @@ const Report = () => {
             okText="Yes"
             cancelText="No"
           >
-            <Button danger disabled={!isToday(new Date(record.order_date))}>
-              Delete
+            <Button
+              danger
+              disabled={
+                !isToday(new Date(record.order_date)) ||
+                record.deleted_by !== null
+              }
+            >
+              Void
             </Button>
           </Popconfirm>
         </Space>

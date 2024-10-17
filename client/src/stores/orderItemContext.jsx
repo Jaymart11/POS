@@ -53,15 +53,18 @@ export const OrderItemProvider = ({ children }) => {
     const quantityByPackagingId = {};
 
     orderItem.forEach((product) => {
-      const packagingId = product.packaging_id;
-      const quantity = product.quantity;
+      product.packaging_details.map((pd) => {
+        const packagingId = pd.packaging_id;
+        const quantity = product.quantity;
 
-      if (quantityByPackagingId[packagingId]) {
-        quantityByPackagingId[packagingId] += quantity;
-      } else {
-        quantityByPackagingId[packagingId] = quantity;
-      }
+        if (quantityByPackagingId[packagingId]) {
+          quantityByPackagingId[packagingId] += quantity;
+        } else {
+          quantityByPackagingId[packagingId] = quantity;
+        }
+      });
     });
+    console.log(quantityByPackagingId);
     return quantityByPackagingId;
   };
 

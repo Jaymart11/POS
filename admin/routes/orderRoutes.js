@@ -8,7 +8,7 @@ router.post("/report", orderController.exportReport);
 router.get("/:id", orderController.getOrderById);
 router.post("/", orderController.createOrder);
 router.put("/:id", orderController.updateOrder);
-router.delete("/:id", orderController.deleteOrder);
+router.put("/delete/:id", orderController.deleteOrder);
 
 // Order items routes
 router.post("/:orderId/item", orderItemController.createOrderItem);

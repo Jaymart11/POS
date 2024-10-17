@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useProductData } from "../../hooks/useProductData";
-import { useUpdateProductData } from "../../hooks/useProductData";
+import { useDeleteProductData } from "../../hooks/useProductData";
 import { useCategoryData } from "../../hooks/useCategoryData";
 import CreateProductModal from "./CreateProductModal";
 import UpdateProductModal from "./UpdateProductModal";
@@ -20,7 +20,7 @@ const Product = () => {
     refetch,
   } = useProductData(currentCategory);
   const { data: categoryData, isLoading: categoryLoading } = useCategoryData();
-  const { mutate } = useUpdateProductData();
+  const { mutate } = useDeleteProductData();
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);

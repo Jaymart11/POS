@@ -62,7 +62,8 @@ exports.updateStock = (req, res) => {
 
 exports.deleteStock = (req, res) => {
   const stockId = req.params.id;
-  stockModel.deleteStock(stockId, (err, result) => {
+  const stockData = req.body;
+  stockModel.deleteStock(stockId, stockData, (err, result) => {
     if (err) {
       console.error(err);
       res.status(500).json({ error: "Internal server error" });

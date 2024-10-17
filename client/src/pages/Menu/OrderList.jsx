@@ -84,9 +84,9 @@ const OrderList = () => {
         total_price: totalPayment() - (f.discount || 0),
       },
       items: orderItem.map(
-        ({ product_id, packaging_id, quantity, price_at_order }) => ({
+        ({ product_id, packaging_details, quantity, price_at_order }) => ({
           product_id,
-          packaging_id,
+          packaging_details,
           quantity,
           price_at_order,
         })

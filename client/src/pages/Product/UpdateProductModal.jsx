@@ -1,9 +1,10 @@
-import { Modal, Form, Input, Select } from "antd";
+import { Modal, Form, Input, Select, Button } from "antd";
 import { useUpdateProductData } from "../../hooks/useProductData";
 import { useCategoryData } from "../../hooks/useCategoryData";
 import { usePackagingData } from "../../hooks/usePackagingData";
 import useNotification from "../../hooks/useNotification";
 import { useEffect } from "react";
+import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 
 const CreateProductModal = ({
   visible,
@@ -21,7 +22,12 @@ const CreateProductModal = ({
 
   useEffect(() => {
     if (product) {
-      form.setFieldsValue(product);
+      console.log(product);
+      form.setFieldsValue({
+        ...product,
+        packaging: [...product.packaging_details.map((p) => p.packaging_id)],
+        packaging_details: undefined,
+      });
     }
   }, [product, form]);
 
@@ -29,6 +35,10 @@ const CreateProductModal = ({
     form
       .validateFields()
       .then((values) => {
+        console.log({
+          id: product.id,
+          data: { ...values, updated_by: user.id },
+        });
         mutate({ id: product.id, data: { ...values, updated_by: user.id } });
         openNotificationWithIcon(
           "success",
@@ -47,7 +57,7 @@ const CreateProductModal = ({
   return (
     <>
       <Modal
-        title="Create Product"
+        title="Update Product"
         open={visible}
         onOk={handleOk}
         onCancel={onCancel}
@@ -55,7 +65,7 @@ const CreateProductModal = ({
         confirmLoading={isLoading}
         centered={true}
       >
-        <Form form={form} layout="vertical" name="create_product">
+        <Form form={form} layout="vertical" name="update_product">
           <Form.Item
             name="code"
             label="Code"
@@ -70,9 +80,9 @@ const CreateProductModal = ({
           >
             <Input />
           </Form.Item>
-          <Form.Item name="product_quantity" label="Quantity">
+          {/* <Form.Item name="product_quantity" label="Quantity">
             <Input />
-          </Form.Item>
+          </Form.Item> */}
           <Form.Item name="price" label="Price">
             <Input />
           </Form.Item>
@@ -94,24 +104,61 @@ const CreateProductModal = ({
               }))}
             />
           </Form.Item>
-          <Form.Item
-            name="packaging_id"
-            label="Packaging"
-            rules={[
-              {
-                required: true,
-                message: "Please select a packaging!",
-              },
-            ]}
-          >
-            <Select
-              loading={packLoading}
-              options={packData?.map((pack) => ({
-                label: pack.name,
-                value: pack.id,
-              }))}
-            />
-          </Form.Item>
+          <Form.List name="packaging">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map((field) => {
+                  console.log(field);
+                  return (
+                    <Form.Item
+                      label={
+                        <>
+                          Packaging {field.name + 1} &nbsp;&nbsp;
+                          <MinusCircleOutlined
+                            style={{ color: "red" }}
+                            onClick={() => remove(field.name)}
+                          />
+                        </>
+                      }
+                      required={false}
+                      key={field.key}
+                    >
+                      <Form.Item
+                        {...field}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select a packaging!",
+                          },
+                        ]}
+                        noStyle
+                      >
+                        <Select
+                          loading={packLoading}
+                          options={packData.map((pack) => ({
+                            label: pack.name,
+                            value: pack.id,
+                          }))}
+                        />
+                      </Form.Item>
+                    </Form.Item>
+                  );
+                })}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => {
+                      add();
+                    }}
+                    style={{ width: "100%" }}
+                    icon={<PlusOutlined />}
+                  >
+                    Add packaging field
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
     </>

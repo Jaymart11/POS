@@ -3,7 +3,7 @@ const db = require("../database");
 class OrderModel {
   getAllOrders(callback) {
     db.query(
-      `SELECT o.id,o.total_price,o.total_items,o.discount, o.amount, ot.name AS order_type, CONCAT(u.first_name, ' ', u.last_name) AS employee, pm.name AS payment_method, s.name as status, o.order_date  FROM orders o LEFT JOIN order_type ot ON o.order_type_id = ot.id LEFT JOIN user u ON o.user_id = u.id LEFT JOIN payment_method pm ON o.payment_method_id = pm.id LEFT JOIN status s ON o.status_id = s.id ORDER BY o.order_date DESC`,
+      `SELECT o.id,o.total_price,o.total_items,o.discount, o.amount, ot.name AS order_type, CONCAT(u.first_name, ' ', u.last_name) AS employee, pm.name AS payment_method, s.name as status, o.order_date, CONCAT(u1.first_name, ' ', u1.last_name) AS deleted_by, o.deleted_at FROM orders o LEFT JOIN order_type ot ON o.order_type_id = ot.id LEFT JOIN user u ON o.user_id = u.id LEFT JOIN user u1 ON o.deleted_by = u1.id LEFT JOIN payment_method pm ON o.payment_method_id = pm.id LEFT JOIN status s ON o.status_id = s.id ORDER BY o.order_date DESC`,
       callback
     );
   }
@@ -41,38 +41,51 @@ class OrderModel {
       const orderItemValues = orderItems.map((item) => [
         item.order_id,
         item.product_id,
-        item.packaging_id,
         item.quantity,
         item.price_at_order,
       ]);
 
       db.query(
-        "INSERT INTO order_item (order_id, product_id, packaging_id, quantity, price_at_order) VALUES ?",
+        "INSERT INTO order_item (order_id, product_id, quantity, price_at_order) VALUES ?",
         [orderItemValues],
         (err) => {
           if (err) return callback(err);
 
-          const quantityUpdates = orderItems.map(
-            (item) =>
-              new Promise((resolve, reject) => {
-                db.query(
-                  "UPDATE product SET product_quantity = product_quantity - ? WHERE id = ?",
-                  [item.quantity, item.product_id],
-                  (err) => {
-                    if (err) reject(err);
+          const quantityUpdates = orderItems.map((item) => {
+            return new Promise((resolve, reject) => {
+              // First, update the product's quantity
+              db.query(
+                "UPDATE product SET product_quantity = product_quantity - ? WHERE id = ?",
+                [item.quantity, item.product_id],
+                (err) => {
+                  if (err) return reject(err);
 
-                    db.query(
-                      "UPDATE packaging SET quantity = quantity - ? WHERE id = ?",
-                      [item.quantity, item.packaging_id],
-                      (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                      }
-                    );
-                  }
-                );
-              })
-          );
+                  // If there are multiple packaging types, iterate over them to update each one
+                  const packagingPromises = item.packaging_details.map(
+                    (packaging) => {
+                      return new Promise(
+                        (resolvePackaging, rejectPackaging) => {
+                          db.query(
+                            "UPDATE packaging SET quantity = quantity - ? WHERE id = ?",
+                            [item.quantity, packaging.packaging_id],
+                            (err) => {
+                              if (err) rejectPackaging(err);
+                              else resolvePackaging();
+                            }
+                          );
+                        }
+                      );
+                    }
+                  );
+
+                  // Wait for all packaging updates to complete
+                  Promise.all(packagingPromises)
+                    .then(() => resolve())
+                    .catch((err) => reject(err));
+                }
+              );
+            });
+          });
 
           Promise.all(quantityUpdates)
             .then(() => callback(null, orderId))
@@ -118,26 +131,18 @@ class OrderModel {
     );
   }
 
-  deleteOrder(orderId, callback) {
+  deleteOrder(orderId, orderData, callback) {
     db.query(
-      "SELECT order_id, product_id, packaging_id, quantity FROM order_item WHERE order_id = ?",
+      "SELECT oi.order_id, oi.product_id, oi.quantity, pp.packaging_id FROM order_item oi LEFT JOIN product_packaging pp ON pp.product_id = oi.product_id WHERE order_id = ?",
       [orderId],
       (err, orderResult) => {
         if (err) return callback(err);
-        console.log(orderResult.length);
         function updateProductAndPackaging(index) {
           if (index >= orderResult.length) {
             db.query(
-              "DELETE FROM order_item WHERE order_id = ?",
-              [orderId],
-              (err, result) => {
-                if (err) return callback(err);
-                db.query(
-                  "DELETE FROM orders WHERE id = ?",
-                  [orderId],
-                  callback
-                );
-              }
+              "UPDATE orders SET ? WHERE id = ?",
+              [orderData, orderId],
+              callback
             );
             return;
           }
@@ -154,7 +159,6 @@ class OrderModel {
                 [orderItem.quantity, orderItem.packaging_id],
                 (err) => {
                   if (err) return callback(err);
-
                   updateProductAndPackaging(index + 1);
                 }
               );
@@ -202,7 +206,9 @@ class OrderModel {
                 order_item oi 
                 INNER JOIN orders o ON oi.order_id = o.id 
             WHERE 
-                o.order_date BETWEEN '${date[0]}' AND '${date[1]}' ${
+                o.deleted_by IS NULL AND o.order_date BETWEEN '${
+                  date[0]
+                }' AND '${date[1]}' ${
         user_id !== 0 ? "AND o.user_id =" + user_id : ""
       }
         ) oi ON p.id = oi.product_id
@@ -286,9 +292,9 @@ class OrderModel {
         LEFT JOIN 
             product p ON oi.product_id = p.id
         WHERE 
-            o.order_date BETWEEN '${date[0]}' AND '${date[1]}' ${
-        user_id !== 0 ? "AND o.user_id = " + user_id : ""
-      }
+            o.deleted_by IS NULL AND o.order_date BETWEEN '${date[0]}' AND '${
+        date[1]
+      }' ${user_id !== 0 ? "AND o.user_id = " + user_id : ""}
         GROUP BY 
             p.id
     ),
@@ -300,9 +306,9 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            transaction_date BETWEEN '${date[0]}' AND '${date[1]}' ${
-        user_id !== 0 ? "AND created_by = " + user_id : ""
-      }
+            deleted_by IS NULL AND transaction_date BETWEEN '${date[0]}' AND '${
+        date[1]
+      }' ${user_id !== 0 ? "AND created_by = " + user_id : ""}
         GROUP BY 
             product_id
     ),    
@@ -317,7 +323,9 @@ class OrderModel {
       LEFT JOIN
           product p ON oi.product_id = p.id
       WHERE
-        o.order_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
+        o.deleted_by IS NULL AND o.order_date BETWEEN DATE('${date[1]}') AND '${
+        date[0]
+      }'
       GROUP BY
           p.id
   ),
@@ -329,7 +337,9 @@ class OrderModel {
       FROM
           stock_adjustments
       WHERE
-        transaction_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
+        deleted_by IS NULL AND transaction_date BETWEEN DATE('${
+          date[1]
+        }') AND '${date[0]}'
       GROUP BY
           product_id
   ),
@@ -419,18 +429,20 @@ class OrderModel {
     ),
     OrderQuantities AS (
         SELECT 
-            p.id AS packaging_id,
+            pk.id AS packaging_id,
             COALESCE(SUM(oi.quantity), 0) AS total_quantity
         FROM 
             orders o
         LEFT JOIN 
             order_item oi ON o.id = oi.order_id
         LEFT JOIN 
-            packaging p ON oi.packaging_id = p.id
+            product_packaging pp ON pp.product_id = oi.product_id
+        LEFT JOIN
+            packaging pk ON pp.packaging_id = pk.id
         WHERE 
-            o.order_date BETWEEN '${date[0]}' AND '${date[1]}'
+            o.deleted_by IS NULL AND o.order_date BETWEEN '${date[0]}' AND '${date[1]}'
         GROUP BY 
-            p.id
+            pk.id
     ),
     StockAdjustments AS (
         SELECT 
@@ -440,24 +452,26 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            transaction_date BETWEEN '${date[0]}' AND '${date[1]}'
+            deleted_by IS NULL AND transaction_date BETWEEN '${date[0]}' AND '${date[1]}' 
         GROUP BY 
             packaging_id
     ),
     OrderQuantitiesBefore AS (
         SELECT 
-            p.id AS packaging_id,
+            pk.id AS packaging_id,
             COALESCE(SUM(oi.quantity), 0) AS total_quantity
         FROM 
             orders o
         LEFT JOIN 
             order_item oi ON o.id = oi.order_id
         LEFT JOIN 
-            packaging p ON oi.packaging_id = p.id
+            product_packaging pp ON pp.product_id = oi.product_id
+        LEFT JOIN
+            packaging pk ON pp.packaging_id = pk.id
         WHERE 
-            o.order_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
+            o.deleted_by IS NULL AND o.order_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
         GROUP BY 
-            p.id
+            pk.id
     ),
     StockAdjustmentsBefore AS (
         SELECT 
@@ -467,7 +481,7 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            transaction_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
+            deleted_by IS NULL AND transaction_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
         GROUP BY 
             packaging_id
     ),

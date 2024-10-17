@@ -25,7 +25,7 @@ export const updateStockData = async (id, data) => {
 };
 
 // Delete
-export const deleteStockData = async (id) => {
-  const response = await apiClient.delete(`/stock/${id}`);
+export const deleteStockData = async (id, data) => {
+  const response = await apiClient.put(`/stock/delete/${id}`, data);
   return response.data;
 };
