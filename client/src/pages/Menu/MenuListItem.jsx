@@ -78,13 +78,14 @@ const MenuListItem = ({ item }) => {
 
   return (
     <>
-      <Col xs={24} md={12} xl={8}>
+      <Col xs={24} md={12} xl={8} style={{ display: "flex" }}>
         <Card
           bordered={true}
           hoverable={true}
           style={{
             minWidth: "200px",
             borderLeft: `5px solid ${qtyStatus()}`,
+            width: "100%",
           }}
           onClick={
             item.product_quantity - currentQuantity > 0 &&
