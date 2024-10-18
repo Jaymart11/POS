@@ -13,6 +13,17 @@ exports.getAllSettings = (req, res) => {
   });
 };
 
+exports.getLowQuantity = (req, res) => {
+  settingModel.getLowQuantity((err, settings) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+    res.json(settings);
+  });
+};
+
 exports.getSettingById = (req, res) => {
   const settingId = req.params.id;
   settingModel.getSettingById(settingId, (err, setting) => {

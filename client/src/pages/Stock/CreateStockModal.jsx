@@ -3,14 +3,31 @@ import { useCreateStockData } from "../../hooks/useStockData";
 import { useProductData } from "../../hooks/useProductData";
 import { usePackagingData } from "../../hooks/usePackagingData";
 import useNotification from "../../hooks/useNotification";
+import { useEffect } from "react";
 
-const CreateStockModal = ({ visible, onCancel }) => {
+const CreateStockModal = ({ visible, onCancel, notifData = null }) => {
   const { mutate, isLoading } = useCreateStockData();
   const { data: prodData, isLoading: prodLoading } = useProductData();
   const { data: packData, isLoading: packLoading } = usePackagingData();
   const openNotificationWithIcon = useNotification();
   const [form] = Form.useForm();
   const user = JSON.parse(localStorage.getItem("user"));
+
+  useEffect(() => {
+    if (notifData) {
+      form.resetFields();
+      const item_type =
+        notifData.item_type === "Product"
+          ? { product_id: notifData.id }
+          : { packaging_id: notifData.id };
+      form.setFieldsValue({
+        type: "restock",
+        ...item_type,
+      });
+    }
+  }, [notifData]);
+
+  console.log(form.getFieldValue());
 
   const handleOk = () => {
     form
@@ -68,7 +85,7 @@ const CreateStockModal = ({ visible, onCancel }) => {
           >
             {({ getFieldValue }) =>
               !getFieldValue("packaging_id") ? (
-                <Form.Item name="product_id" label="Damaged Product">
+                <Form.Item name="product_id" label="Product">
                   <Select
                     showSearch
                     filterOption={filterOption}
@@ -81,7 +98,7 @@ const CreateStockModal = ({ visible, onCancel }) => {
                         value: 0,
                         label: " ",
                       },
-                      ...prodData.map(
+                      ...prodData?.map(
                         ({ id, product_name, product_quantity }) => ({
                           value: id,
                           label: `${product_name} - ${product_quantity} pcs.`,
@@ -102,7 +119,7 @@ const CreateStockModal = ({ visible, onCancel }) => {
           >
             {({ getFieldValue }) =>
               !getFieldValue("product_id") ? (
-                <Form.Item name="packaging_id" label="Damaged Packaging">
+                <Form.Item name="packaging_id" label="Packaging">
                   <Select
                     showSearch
                     filterOption={filterOption}

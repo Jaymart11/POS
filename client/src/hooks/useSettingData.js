@@ -5,11 +5,16 @@ import {
   createSettingData,
   updateSettingData,
   deleteSettingData,
+  getLowQuantityData,
 } from "../services/settingService";
 
 // Read
 export const useSettingData = () => {
   return useQuery("settingData", getSettingData);
+};
+
+export const useLowQuantityData = () => {
+  return useQuery("lowQuantity", getLowQuantityData);
 };
 
 export const useSettingDataById = (id) => {
@@ -31,6 +36,7 @@ export const useUpdateSettingData = () => {
   return useMutation(({ id, data }) => updateSettingData(id, data), {
     onSuccess: () => {
       queryClient.invalidateQueries("settingData");
+      queryClient.invalidateQueries("lowQuantity");
     },
   });
 };

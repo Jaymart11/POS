@@ -23,6 +23,7 @@ export const useCreateStockData = () => {
       queryClient.invalidateQueries("stockData");
       queryClient.invalidateQueries("productData");
       queryClient.invalidateQueries("packagingData");
+      queryClient.invalidateQueries("lowQuantity");
     },
   });
 };
@@ -35,6 +36,7 @@ export const useUpdateStockData = () => {
       queryClient.invalidateQueries("stockData");
       queryClient.invalidateQueries("productData");
       queryClient.invalidateQueries("packagingData");
+      queryClient.invalidateQueries("lowQuantity");
     },
   });
 };

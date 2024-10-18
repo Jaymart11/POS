@@ -6,6 +6,11 @@ export const createSettingData = async (data) => {
   return response.data;
 };
 
+export const getLowQuantityData = async () => {
+  const response = await apiClient.get("/setting/low_quantity");
+  return response.data;
+};
+
 // Read
 export const getSettingData = async () => {
   const response = await apiClient.get("/setting");

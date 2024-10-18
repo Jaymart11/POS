@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { Layout } from "antd";
+import { Layout, FloatButton } from "antd";
 const { Content } = Layout;
 import Sidebar from "./components/Sidebar/Sidebar";
 import Category from "./pages/Category/Category";
@@ -14,6 +14,7 @@ import Report from "./pages/Report/Report";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useState } from "react";
 import Settings from "./pages/Settings/Settings";
+import Notification from "./components/Notification/Notification";
 
 function App() {
   const [isLogin, setIsLogin] = useState(!!localStorage.getItem("user"));
@@ -29,6 +30,7 @@ function App() {
         <Sidebar setIsLogin={setIsLogin} isAdmin={isAdmin} />
       )}
       <Layout>
+        <Notification isLogin={isLogin} />
         <Content
           style={{
             margin: "16px",
