@@ -109,7 +109,7 @@ const MenuListItem = ({ item }) => {
               <Text style={{ margin: 0, color: productStatus() }}>
                 Qty: {item.product_quantity - currentQuantity}
               </Text>
-              <Text style={{ margin: 0, color: productStatus() }}>
+              <Text style={{ margin: 0 }}>
                 <br />
                 <b>Pkg Qty</b>
               </Text>
