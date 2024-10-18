@@ -13,6 +13,7 @@ import Login from "./pages/Login/Login";
 import Report from "./pages/Report/Report";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useState } from "react";
+import Settings from "./pages/Settings/Settings";
 
 function App() {
   const [isLogin, setIsLogin] = useState(!!localStorage.getItem("user"));
@@ -101,6 +102,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Stock />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />

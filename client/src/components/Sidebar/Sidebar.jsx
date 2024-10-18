@@ -10,6 +10,7 @@ import {
   BorderOuterOutlined,
   LogoutOutlined,
   WalletOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
 const { Sider } = Layout;
@@ -40,6 +41,7 @@ const Sidebar = ({ setIsLogin, isAdmin }) => {
           getItem("Expense", "expense", <WalletOutlined />),
           getItem("Category", "category", <DatabaseOutlined />),
           getItem("User", "user", <UserOutlined />),
+          getItem("Settings", "settings", <SettingOutlined />),
 
           getItem("Logout", "logout", <LogoutOutlined />, {
             position: "absolute",

@@ -8,6 +8,7 @@ const { Text, Title } = Typography;
 const MenuListItem = ({ item }) => {
   const { orderItem, addItemToOrder, totalPackagingItem } =
     useContext(OrderItemContext);
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const handleAdd = () => {
     addItemToOrder({
@@ -37,9 +38,10 @@ const MenuListItem = ({ item }) => {
     ) {
       return "rgb(194, 64, 52)";
     } else if (
-      (remainingQuantity >= 1 && remainingQuantity <= 5) ||
+      (remainingQuantity >= 1 &&
+        remainingQuantity <= user.stock_notification) ||
       (total_packaging.some((tp) => tp.quantity >= 1) &&
-        total_packaging.some((tp) => tp.quantity <= 5))
+        total_packaging.some((tp) => tp.quantity <= user.stock_notification))
     ) {
       return "rgb(245, 199, 17)";
     } else {
@@ -49,9 +51,12 @@ const MenuListItem = ({ item }) => {
 
   const productStatus = () => {
     const remainingProduct = item.product_quantity - currentQuantity;
-    if (remainingProduct > 5) {
+    if (remainingProduct > user.stock_notification) {
       return "white";
-    } else if (remainingProduct >= 1 && remainingProduct <= 5) {
+    } else if (
+      remainingProduct >= 1 &&
+      remainingProduct <= user.stock_notification
+    ) {
       return "rgb(245, 199, 17)";
     } else {
       return "rgb(194,64,52)";
@@ -59,11 +64,11 @@ const MenuListItem = ({ item }) => {
   };
 
   const packagingStatus = () => {
-    if (total_packaging.some((tp) => tp.quantity > 5)) {
+    if (total_packaging.some((tp) => tp.quantity > user.stock_notification)) {
       return "white";
     } else if (
       total_packaging.some((tp) => tp.quantity >= 1) &&
-      total_packaging.some((tp) => tp.quantity <= 5)
+      total_packaging.some((tp) => tp.quantity <= user.stock_notification)
     ) {
       return "rgb(245, 199, 17)";
     } else {

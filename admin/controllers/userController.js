@@ -103,6 +103,7 @@ exports.loginUser = (req, res) => {
         id: user.id,
         email: user.email,
         access_level: user.access_level_id,
+        stock_notification: user.stock_notification,
       },
     });
   });
