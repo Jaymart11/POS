@@ -2,10 +2,12 @@ import { Button, Form, Input } from "antd";
 import { userLogin } from "../../services/userService";
 import useNotification from "../../hooks/useNotification";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Login = ({ setIsLogin, setIsAdmin }) => {
   const navigate = useNavigate();
   const openNotificationWithIcon = useNotification();
+  const user = JSON.parse(localStorage.getItem("user"));
   const onFinish = async (values) => {
     try {
       const res = await userLogin(values);
@@ -18,6 +20,13 @@ const Login = ({ setIsLogin, setIsAdmin }) => {
       openNotificationWithIcon("error", e.response.data.message, "");
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      navigate("/product");
+      user.access_level === 1 ? setIsAdmin(true) : setIsAdmin(false);
+    }
+  }, []);
 
   return (
     <div
