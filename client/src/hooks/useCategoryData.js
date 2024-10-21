@@ -7,7 +7,6 @@ import {
   deleteCategoryData,
   updateCategoryOrderData,
 } from "../services/categoryService";
-import useNotification from "./useNotification";
 
 // Read
 export const useCategoryData = () => {

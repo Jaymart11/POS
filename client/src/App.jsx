@@ -32,7 +32,7 @@ function App() {
         <Sidebar setIsLogin={setIsLogin} isAdmin={isAdmin} />
       )}
       <Layout>
-        {user?.access_level === 1 && <Notification isLogin={isLogin} />}
+        <Notification isLogin={isLogin} />
         <Content
           style={{
             margin: "16px",

@@ -5,6 +5,7 @@ import { useState } from "react";
 const NotificationModal = ({ visible, onCancel, data, isLoading }) => {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [notifData, setNotifData] = useState();
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const showCreateModal = () => {
     setIsCreateModalVisible(true);
@@ -43,22 +44,23 @@ const NotificationModal = ({ visible, onCancel, data, isLoading }) => {
         </Typography>
       ),
     },
-
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Button
-          type="primary"
-          onClick={() => {
-            showCreateModal();
-            setNotifData(record);
-          }}
-        >
-          Restock
-        </Button>
-      ),
-    },
+    user?.access_level === 1
+      ? {
+          title: "Action",
+          key: "action",
+          render: (_, record) => (
+            <Button
+              type="primary"
+              onClick={() => {
+                showCreateModal();
+                setNotifData(record);
+              }}
+            >
+              Restock
+            </Button>
+          ),
+        }
+      : null,
   ];
 
   return (
@@ -87,7 +89,9 @@ const NotificationModal = ({ visible, onCancel, data, isLoading }) => {
         centered={true}
         footer={null}
       >
-        {!data?.length || <Table columns={settingColumn} dataSource={data} />}
+        {!data?.length || (
+          <Table columns={settingColumn.filter((s) => s)} dataSource={data} />
+        )}
       </Modal>
     </>
   );
