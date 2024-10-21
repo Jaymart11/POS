@@ -311,7 +311,14 @@ const Product = () => {
   }, [productData, categoryData]);
 
   return (
-    <>
+    <div
+      style={{
+        height: "96.5vh",
+        overflowX: "hidden",
+        msOverflowStyle: "none",
+        scrollbarWidth: "none",
+      }}
+    >
       <CreateProductModal
         visible={isCreateModalVisible}
         onCancel={handleCancel}
@@ -391,7 +398,7 @@ const Product = () => {
           />
         </SortableContext>
       </DndContext>
-    </>
+    </div>
   );
 };
 

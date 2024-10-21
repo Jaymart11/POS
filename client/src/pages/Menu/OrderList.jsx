@@ -105,7 +105,15 @@ const OrderList = () => {
   };
 
   return (
-    <>
+    <div
+      style={{
+        height: "96.5vh",
+        overflowX: "hidden",
+        msOverflowStyle: "none",
+        scrollbarWidth: "none",
+        padding: "10px",
+      }}
+    >
       <Flex gap="small" wrap style={{ marginBottom: "10px" }}>
         <Button
           type={order.order_type_id === 1 ? "primary" : "default"}
@@ -286,7 +294,7 @@ const OrderList = () => {
           </Form.Item>
         </Form>
       </Card>
-    </>
+    </div>
   );
 };
 export default OrderList;

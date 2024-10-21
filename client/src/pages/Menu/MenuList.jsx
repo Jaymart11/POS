@@ -24,12 +24,21 @@ const MenuList = () => {
             : []),
         ]}
       />
-
-      <Row gutter={[16, 16]}>
-        {prodData?.map((prod) => (
-          <MenuListItem key={prod.id} item={prod} />
-        ))}
-      </Row>
+      <div
+        style={{
+          height: "90vh",
+          overflowX: "hidden",
+          msOverflowStyle: "none",
+          scrollbarWidth: "none",
+          padding: "10px",
+        }}
+      >
+        <Row gutter={[16, 16]}>
+          {prodData?.map((prod) => (
+            <MenuListItem key={prod.id} item={prod} />
+          ))}
+        </Row>
+      </div>
     </>
   );
 };

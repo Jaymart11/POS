@@ -17,8 +17,6 @@ import Settings from "./pages/Settings/Settings";
 import Notification from "./components/Notification/Notification";
 
 function App() {
-  const user = JSON.parse(localStorage.getItem("user"));
-
   const [isLogin, setIsLogin] = useState(!!localStorage.getItem("user"));
   const [isAdmin, setIsAdmin] = useState(false);
 
