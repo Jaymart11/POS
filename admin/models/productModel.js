@@ -5,19 +5,25 @@ const db = require("../database.js");
 class ProductModel {
   getAllProducts(categoryId, callback) {
     let query =
-      "SELECT p.id, p.code, p.product_name, p.product_quantity, p.price, p.date_created, p.created_by, p.updated_by, p.created_at, p.updated_at, p.category_id, p.deleted_by, p.deleted_at,pk.id as packaging_id, pk.name as packaging_name, pk.quantity FROM product p LEFT JOIN product_packaging pp ON p.id = pp.product_id LEFT JOIN packaging pk ON pk.id = pp.packaging_id";
+      "SELECT p.id, p.code, p.product_name, p.product_quantity, p.price, p.date_created, p.created_by, p.updated_by, p.created_at, p.updated_at, p.category_id, p.deleted_by, p.deleted_at,pk.id as packaging_id, pk.name as packaging_name, pk.quantity, p.order_num FROM product p LEFT JOIN product_packaging pp ON p.id = pp.product_id LEFT JOIN packaging pk ON pk.id = pp.packaging_id";
     if (categoryId) {
-      query += " WHERE p.category_id = ? AND p.deleted_by IS NULL";
+      query += " WHERE p.category_id = ? AND p.deleted_by IS NULL ";
     } else {
       query += " WHERE p.deleted_by IS NULL";
     }
 
-    query += " ORDER BY p.category_id";
+    query += " ORDER BY p.category_id, p.order_num";
+
+    console.log(query);
     db.query(query, [categoryId], callback);
   }
 
   getProductById(productId, callback) {
-    db.query("SELECT * FROM product WHERE id = ?", [productId], callback);
+    db.query(
+      "SELECT * FROM product WHERE id = ? ORDER BY order_num",
+      [productId],
+      callback
+    );
   }
 
   createProduct(
@@ -165,6 +171,28 @@ class ProductModel {
         );
       }
     );
+  }
+
+  updateOrderNumber(productData, callback) {
+    const quantityUpdates = productData.map((item) => {
+      return new Promise((resolve, reject) => {
+        db.query(
+          "UPDATE product SET order_num = ? WHERE id = ?",
+          [item.order_num, item.id],
+          (err, result) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(result);
+          }
+        );
+      });
+    });
+
+    // Wait for all updates to finish
+    Promise.all(quantityUpdates)
+      .then((results) => callback(null, results))
+      .catch((err) => callback(err));
   }
 
   deleteProduct(productId, productData, callback) {

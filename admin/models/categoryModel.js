@@ -4,7 +4,7 @@ const db = require("../database.js");
 
 class CategoryModel {
   getAllCategories(callback) {
-    db.query("SELECT * FROM category", callback);
+    db.query("SELECT * FROM category ORDER BY order_num", callback);
   }
 
   getCategoryById(categoryId, callback) {
@@ -25,6 +25,28 @@ class CategoryModel {
 
   deleteCategory(categoryId, callback) {
     db.query("DELETE FROM category WHERE id = ?", [categoryId], callback);
+  }
+
+  updateOrderNumber(categoryData, callback) {
+    const quantityUpdates = categoryData.map((item) => {
+      return new Promise((resolve, reject) => {
+        db.query(
+          "UPDATE category SET order_num = ? WHERE id = ?",
+          [item.order_num, item.id],
+          (err, result) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(result);
+          }
+        );
+      });
+    });
+
+    // Wait for all updates to finish
+    Promise.all(quantityUpdates)
+      .then((results) => callback(null, results))
+      .catch((err) => callback(err));
   }
 
   getCategoryWithSubProducts(callback) {

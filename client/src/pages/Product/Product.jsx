@@ -1,13 +1,137 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import { useProductData } from "../../hooks/useProductData";
-import { useDeleteProductData } from "../../hooks/useProductData";
-import { useCategoryData } from "../../hooks/useCategoryData";
+import {
+  useDeleteProductData,
+  useUpdateProductOrderData,
+} from "../../hooks/useProductData";
+import {
+  useCategoryData,
+  useUpdateCategoryOrderData,
+} from "../../hooks/useCategoryData";
 import CreateProductModal from "./CreateProductModal";
 import UpdateProductModal from "./UpdateProductModal";
 import RestockProductModal from "./RestockProductModal";
 import { Space, Table, Button, Popconfirm } from "antd";
 import useNotification from "../../hooks/useNotification";
 import { format } from "date-fns";
+import { MenuOutlined } from "@ant-design/icons";
+import { DndContext } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+const RowContext = React.createContext({});
+const DragHandle = () => {
+  const { setActivatorNodeRef, listeners } = useContext(RowContext);
+  return (
+    <Button
+      type="text"
+      size="small"
+      icon={<MenuOutlined />}
+      style={{
+        cursor: "move",
+      }}
+      ref={setActivatorNodeRef}
+      {...listeners}
+    />
+  );
+};
+
+const Row = (props) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: props["data-row-key"],
+  });
+  const style = {
+    ...props.style,
+    transform: CSS.Translate.toString(transform),
+    transition,
+    ...(isDragging
+      ? {
+          position: "relative",
+          zIndex: 2,
+        }
+      : {}),
+  };
+  const contextValue = useMemo(
+    () => ({
+      setActivatorNodeRef,
+      listeners,
+    }),
+    [setActivatorNodeRef, listeners]
+  );
+  return (
+    <RowContext.Provider value={contextValue}>
+      <tr {...props} ref={setNodeRef} style={style} {...attributes} />
+    </RowContext.Provider>
+  );
+};
+
+const RowContext2 = React.createContext({});
+const DragHandle2 = () => {
+  const { setActivatorNodeRef, listeners } = useContext(RowContext2);
+  return (
+    <Button
+      type="text"
+      size="small"
+      icon={<MenuOutlined />}
+      style={{
+        cursor: "move",
+      }}
+      ref={setActivatorNodeRef}
+      {...listeners}
+    />
+  );
+};
+
+const Row2 = (props) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: props["data-row-key"],
+  });
+  const style = {
+    ...props.style,
+    transform: CSS.Translate.toString(transform),
+    transition,
+    ...(isDragging
+      ? {
+          position: "relative",
+          zIndex: 2,
+        }
+      : {}),
+  };
+  const contextValue = useMemo(
+    () => ({
+      setActivatorNodeRef,
+      listeners,
+    }),
+    [setActivatorNodeRef, listeners]
+  );
+  return (
+    <RowContext2.Provider value={contextValue}>
+      <tr {...props} ref={setNodeRef} style={style} {...attributes} />
+    </RowContext2.Provider>
+  );
+};
 
 const Product = () => {
   const openNotificationWithIcon = useNotification();
@@ -21,11 +145,15 @@ const Product = () => {
   } = useProductData(currentCategory);
   const { data: categoryData, isLoading: categoryLoading } = useCategoryData();
   const { mutate } = useDeleteProductData();
+  const { mutate: updateMutate } = useUpdateCategoryOrderData();
+  const { mutate: productMutate } = useUpdateProductOrderData();
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   const [isRestockModalVisible, setIsRestockModalVisible] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
+  const [dataSource, setDataSource] = React.useState([]);
+  const [dataSource2, setDataSource2] = React.useState([]);
 
   const showCreateModal = () => {
     setIsCreateModalVisible(true);
@@ -83,6 +211,12 @@ const Product = () => {
       dataIndex: "name",
       key: "name",
     },
+    {
+      key: "sort",
+      align: "center",
+      width: 100,
+      render: () => <DragHandle2 />,
+    },
   ];
 
   const productColumns = [
@@ -120,7 +254,61 @@ const Product = () => {
         </Space>
       ),
     },
+    {
+      key: "sort",
+      align: "center",
+      width: 100,
+      render: () => <DragHandle />,
+    },
   ];
+
+  const onDragEnd = ({ active, over }) => {
+    if (active.id !== over?.id) {
+      setDataSource((prevState) => {
+        const activeIndex = prevState.findIndex(
+          (record) => record.id === active?.id
+        );
+        const overIndex = prevState.findIndex(
+          (record) => record.id === over?.id
+        );
+        const updatedState = arrayMove(prevState, activeIndex, overIndex);
+        updatedState.forEach((item, index) => {
+          item.order_num = index + 1;
+        });
+
+        productMutate(updatedState);
+
+        return updatedState;
+      });
+    }
+  };
+
+  const onDragEnd2 = ({ active, over }) => {
+    if (active.id !== over?.id) {
+      setDataSource2((prevState, idx) => {
+        console.log(idx);
+        const activeIndex = prevState.findIndex(
+          (record) => record.id === active?.id
+        );
+        const overIndex = prevState.findIndex(
+          (record) => record.id === over?.id
+        );
+        const updatedState = arrayMove(prevState, activeIndex, overIndex);
+        updatedState.forEach((item, index) => {
+          item.order_num = index + 1;
+        });
+
+        updateMutate(updatedState);
+
+        return updatedState;
+      });
+    }
+  };
+
+  useEffect(() => {
+    setDataSource(productData || []);
+    setDataSource2(categoryData || []);
+  }, [productData, categoryData]);
 
   return (
     <>
@@ -149,33 +337,60 @@ const Product = () => {
       >
         Create Product
       </Button>
-      <Table
-        columns={columns}
-        dataSource={categoryData}
-        loading={categoryLoading}
-        scroll={{ x: "max-content" }}
-        expandable={{
-          expandedRowRender: () => (
-            <Table
-              columns={productColumns}
-              dataSource={productData}
-              loading={productLoading}
-              scroll={{ x: "max-content" }}
-              rowKey="id"
-            />
-          ),
-          onExpand: (expanded, record) => {
-            if (expanded) {
-              setCurrentCategory(record.id);
-            } else {
-              setCurrentCategory(null);
-            }
-          },
-          expandedRowKeys: [currentCategory],
-          expandRowByClick: true,
-        }}
-        rowKey="id"
-      />
+      <DndContext modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd2}>
+        <SortableContext
+          items={dataSource2?.map((i) => i.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <Table
+            components={{
+              body: {
+                row: Row2,
+              },
+            }}
+            columns={columns}
+            dataSource={dataSource2}
+            loading={categoryLoading}
+            scroll={{ x: "max-content" }}
+            expandable={{
+              expandedRowRender: () => (
+                <DndContext
+                  modifiers={[restrictToVerticalAxis]}
+                  onDragEnd={onDragEnd}
+                >
+                  <SortableContext
+                    items={dataSource?.map((i) => i.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <Table
+                      components={{
+                        body: {
+                          row: Row,
+                        },
+                      }}
+                      columns={productColumns}
+                      dataSource={dataSource}
+                      loading={productLoading}
+                      scroll={{ x: "max-content" }}
+                      rowKey="id"
+                    />
+                  </SortableContext>
+                </DndContext>
+              ),
+              onExpand: (expanded, record) => {
+                if (expanded) {
+                  setCurrentCategory(record.id);
+                } else {
+                  setCurrentCategory(null);
+                }
+              },
+              expandedRowKeys: [currentCategory],
+              expandRowByClick: true,
+            }}
+            rowKey="id"
+          />
+        </SortableContext>
+      </DndContext>
     </>
   );
 };

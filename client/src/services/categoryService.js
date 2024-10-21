@@ -24,6 +24,11 @@ export const updateCategoryData = async (id, data) => {
   return response.data;
 };
 
+export const updateCategoryOrderData = async (data) => {
+  const response = await apiClient.put(`/categories/order_num`, data);
+  return response.data;
+};
+
 // Delete
 export const deleteCategoryData = async (id) => {
   const response = await apiClient.delete(`/categories/${id}`);

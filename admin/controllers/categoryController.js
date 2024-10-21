@@ -60,6 +60,22 @@ exports.updateCategory = (req, res) => {
   });
 };
 
+exports.updateOrderNumber = (req, res) => {
+  const categoryData = req.body;
+  categoryModel.updateOrderNumber(categoryData, (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+    if (result.affectedRows === 0) {
+      res.status(404).json({ error: "Category not found" });
+      return;
+    }
+    res.json({ message: "Category order updated successfully" });
+  });
+};
+
 exports.deleteCategory = (req, res) => {
   const categoryId = req.params.id;
   categoryModel.deleteCategory(categoryId, (err, result) => {

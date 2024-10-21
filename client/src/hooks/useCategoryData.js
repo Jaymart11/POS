@@ -5,7 +5,9 @@ import {
   createCategoryData,
   updateCategoryData,
   deleteCategoryData,
+  updateCategoryOrderData,
 } from "../services/categoryService";
+import useNotification from "./useNotification";
 
 // Read
 export const useCategoryData = () => {
@@ -29,6 +31,15 @@ export const useCreateCategoryData = () => {
 export const useUpdateCategoryData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => updateCategoryData(id, data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries("categoryData");
+    },
+  });
+};
+
+export const useUpdateCategoryOrderData = () => {
+  const queryClient = useQueryClient();
+  return useMutation((data) => updateCategoryOrderData(data), {
     onSuccess: () => {
       queryClient.invalidateQueries("categoryData");
     },

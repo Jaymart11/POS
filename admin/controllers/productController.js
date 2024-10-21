@@ -26,7 +26,21 @@ exports.getAllProducts = (req, res) => {
     );
 
     const finalArray = Object.values(result);
-    res.json(finalArray);
+
+    res.json(
+      finalArray.sort((a, b) => {
+        // Compare by category_id first
+        if (a.category_id > b.category_id) return 1;
+        if (a.category_id < b.category_id) return -1;
+
+        // If category_id is the same, compare by order_num
+        if (a.order_num > b.order_num) return 1;
+        if (a.order_num < b.order_num) return -1;
+
+        // If both are the same, return 0 (they're equal in sorting)
+        return 0;
+      })
+    );
   });
 };
 
@@ -85,6 +99,22 @@ exports.updateProduct = (req, res) => {
       return;
     }
     res.json({ message: "Product updated successfully" });
+  });
+};
+
+exports.updateOrderNumber = (req, res) => {
+  const productData = req.body;
+  productModel.updateOrderNumber(productData, (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+    if (result.affectedRows === 0) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+    res.json({ message: "Product order updated successfully" });
   });
 };
 

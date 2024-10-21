@@ -5,6 +5,7 @@ import {
   createProductData,
   updateProductData,
   deleteProductData,
+  updateProductOrderData,
 } from "../services/productService";
 
 // Read
@@ -32,6 +33,15 @@ export const useCreateProductData = () => {
 export const useUpdateProductData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => updateProductData(id, data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries("productData");
+    },
+  });
+};
+
+export const useUpdateProductOrderData = () => {
+  const queryClient = useQueryClient();
+  return useMutation((data) => updateProductOrderData(data), {
     onSuccess: () => {
       queryClient.invalidateQueries("productData");
     },
