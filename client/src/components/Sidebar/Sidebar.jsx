@@ -51,7 +51,7 @@ const Sidebar = ({ setIsLogin, isAdmin }) => {
         ]
       : [
           getItem("Ordering", "ordering", <ShoppingCartOutlined />),
-          getItem("Stock Adjustment", "stock", <BorderOuterOutlined />),
+          // getItem("Stock Adjustment", "stock", <BorderOuterOutlined />),
           getItem("Expense", "expense", <WalletOutlined />),
           getItem("Report", "report", <PieChartOutlined />),
           getItem("Logout", "logout", <LogoutOutlined />, {

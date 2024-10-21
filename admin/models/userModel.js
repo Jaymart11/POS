@@ -35,7 +35,7 @@ class UserModel {
 
   getUserByEmail(email, callback) {
     db.query(
-      "SELECT * FROM user u CROSS JOIN settings s WHERE u.email = ?",
+      "SELECT u.*, s.stock_notification FROM user u CROSS JOIN settings s WHERE u.email = ?",
       [email],
       callback
     );

@@ -17,6 +17,8 @@ import Settings from "./pages/Settings/Settings";
 import Notification from "./components/Notification/Notification";
 
 function App() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
   const [isLogin, setIsLogin] = useState(!!localStorage.getItem("user"));
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -30,7 +32,7 @@ function App() {
         <Sidebar setIsLogin={setIsLogin} isAdmin={isAdmin} />
       )}
       <Layout>
-        <Notification isLogin={isLogin} />
+        {user.access_level === 1 && <Notification isLogin={isLogin} />}
         <Content
           style={{
             margin: "16px",
