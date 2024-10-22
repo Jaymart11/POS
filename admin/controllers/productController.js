@@ -13,12 +13,23 @@ exports.getAllProducts = (req, res) => {
     }
 
     const result = products.reduce(
-      (acc, { id, packaging_id, packaging_name, quantity, ...rest }) => {
+      (
+        acc,
+        {
+          id,
+          packaging_id,
+          packaging_name,
+          quantity,
+          packaging_stock_notification,
+          ...rest
+        }
+      ) => {
         acc[id] = acc[id] || { ...rest, id, packaging_details: [] };
         acc[id].packaging_details.push({
           packaging_id,
           packaging_name,
           quantity,
+          packaging_stock_notification,
         });
         return acc;
       },

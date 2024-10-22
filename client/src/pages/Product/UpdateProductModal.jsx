@@ -159,6 +159,9 @@ const CreateProductModal = ({
               </>
             )}
           </Form.List>
+          <Form.Item name="stock_notification" label="Stock Notification">
+            <Input />
+          </Form.Item>
         </Form>
       </Modal>
     </>

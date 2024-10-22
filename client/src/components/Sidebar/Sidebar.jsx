@@ -41,7 +41,7 @@ const Sidebar = ({ setIsLogin, isAdmin }) => {
           getItem("Expense", "expense", <WalletOutlined />),
           getItem("Category", "category", <DatabaseOutlined />),
           getItem("User", "user", <UserOutlined />),
-          getItem("Settings", "settings", <SettingOutlined />),
+          // getItem("Settings", "settings", <SettingOutlined />),
 
           getItem("Logout", "logout", <LogoutOutlined />, {
             position: "absolute",

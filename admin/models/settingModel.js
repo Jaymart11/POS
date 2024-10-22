@@ -9,7 +9,7 @@ class SettingModel {
 
   getLowQuantity(callback) {
     db.query(
-      "select p.id, 'Packaging' as item_type,  p.name, p.quantity from packaging p cross join settings s where deleted_by IS NULL AND p.quantity < s.stock_notification union all select p.id, 'Product' as item_type, p.product_name, p.product_quantity from product p cross join settings s where deleted_by IS NULL AND p.product_quantity < s.stock_notification order by quantity",
+      "SELECT id, 'Packaging' as item_type, name, quantity from packaging where quantity < stock_notification AND deleted_by IS NULL UNION ALL SELECT id, 'Product' as item_type, product_name, product_quantity from product where product_quantity < stock_notification AND deleted_by IS NULL ORDER BY quantity",
       callback
     );
   }

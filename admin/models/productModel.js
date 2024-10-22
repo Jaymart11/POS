@@ -5,7 +5,7 @@ const db = require("../database.js");
 class ProductModel {
   getAllProducts(categoryId, callback) {
     let query =
-      "SELECT p.id, p.code, p.product_name, p.product_quantity, p.price, p.date_created, p.created_by, p.updated_by, p.created_at, p.updated_at, p.category_id, p.deleted_by, p.deleted_at,pk.id as packaging_id, pk.name as packaging_name, pk.quantity, p.order_num FROM product p LEFT JOIN product_packaging pp ON p.id = pp.product_id LEFT JOIN packaging pk ON pk.id = pp.packaging_id";
+      "SELECT p.id, p.code, p.product_name, p.product_quantity, p.price, p.date_created, p.created_by, p.updated_by, p.created_at, p.updated_at, p.category_id, p.deleted_by, p.deleted_at,pk.id as packaging_id, pk.name as packaging_name, pk.quantity, p.order_num, p.stock_notification, pk.stock_notification as packaging_stock_notification FROM product p LEFT JOIN product_packaging pp ON p.id = pp.product_id LEFT JOIN packaging pk ON pk.id = pp.packaging_id";
     if (categoryId) {
       query += " WHERE p.category_id = ? AND p.deleted_by IS NULL ";
     } else {
