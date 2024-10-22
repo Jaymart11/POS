@@ -193,7 +193,9 @@ class OrderModel {
       ELSE oi.price_at_order
     END AS price,
     COALESCE(SUM(oi.quantity * oi.price_at_order), 0) AS total_sales,
-    COALESCE(SUM(oi.quantity), 0) AS total_quantity
+    COALESCE(SUM(oi.quantity), 0) AS total_quantity,
+    c.order_num as c_order,
+    p.order_num as p_order
     FROM 
         product p
         LEFT JOIN category c ON c.id = p.category_id
@@ -216,7 +218,7 @@ class OrderModel {
     GROUP BY 
         c.id, c.name, p.id, p.product_name, oi.price_at_order
     ORDER BY 
-        c.id, p.product_name`,
+       c_order, p_order`,
       callback
     );
   }
@@ -231,6 +233,8 @@ class OrderModel {
             l.log_date,
             n.product_name,
             COALESCE(l.start_quantity, 0) AS quantity,
+            n.order_num as n_order,
+            c.order_num as c_order,
             ROW_NUMBER() OVER (PARTITION BY l.product_id ORDER BY l.log_date ASC) AS rn
         FROM
             product_quantity_log l
@@ -251,6 +255,8 @@ class OrderModel {
             l.log_date,
             n.product_name,
             COALESCE(l.end_quantity, 0) AS quantity,
+            n.order_num as n_order,
+            c.order_num as c_order,
             ROW_NUMBER() OVER (PARTITION BY l.product_id ORDER BY l.log_date DESC) AS rn
         FROM
             product_quantity_log l
@@ -273,7 +279,11 @@ class OrderModel {
             min_log.quantity AS start_quantity,
             max_log.log_date AS end_log_date,
             max_log.product_name AS end_name,
-            max_log.quantity AS end_quantity
+            max_log.quantity AS end_quantity,
+            min_log.n_order as min_n_order,
+			      min_log.c_order as min_c_order,
+			      max_log.n_order as max_n_order,
+			      max_log.c_order as max_c_order
         FROM
             (SELECT * FROM MinDates WHERE rn = 1) AS min_log
         JOIN
@@ -365,8 +375,11 @@ class OrderModel {
         COALESCE(sa.dmg_quantity, 0) AS damaged,
         COALESCE(sa.restk_quantity, 0) AS restock,
         COALESCE(oq.total_quantity, 0) AS releasing,
-        (sq.startingBefore + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0) AS ending
-        
+        (sq.startingBefore + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0) AS ending,
+        seq.min_n_order,
+        seq.min_c_order,
+        seq.max_n_order,
+        seq.max_c_order
     FROM
         StartEndQuantities seq
     LEFT JOIN
@@ -376,7 +389,7 @@ class OrderModel {
     LEFT JOIN
         StartQuantity sq ON sq.product_id = seq.product_id
     ORDER BY
-      seq.category_id`,
+        min_c_order, max_c_order, min_n_order, max_n_order`,
       callback
     );
   }
