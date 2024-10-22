@@ -20,8 +20,7 @@ export const useCreatePackagingData = () => {
   const queryClient = useQueryClient();
   return useMutation(createPackagingData, {
     onSuccess: () => {
-      queryClient.invalidateQueries("packagingData");
-      queryClient.invalidateQueries("productData");
+      queryClient.resetQueries();
     },
   });
 };
@@ -31,8 +30,7 @@ export const useUpdatePackagingData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => updatePackagingData(id, data), {
     onSuccess: () => {
-      queryClient.invalidateQueries("packagingData");
-      queryClient.invalidateQueries("productData");
+      queryClient.resetQueries();
     },
   });
 };
@@ -42,8 +40,7 @@ export const useDeletePackagingData = () => {
   const queryClient = useQueryClient();
   return useMutation((id) => deletePackagingData(id), {
     onSuccess: () => {
-      queryClient.invalidateQueries("packagingData");
-      queryClient.invalidateQueries("productData");
+      queryClient.resetQueries();
     },
   });
 };

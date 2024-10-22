@@ -137,8 +137,13 @@ class OrderModel {
       [orderId],
       (err, orderResult) => {
         if (err) return callback(err);
-        function updateProductAndPackaging(index) {
+
+        // Array to store product IDs that have been updated
+        const updatedProductIds = [];
+
+        function updatePackagingAndProduct(index) {
           if (index >= orderResult.length) {
+            // Once all updates are complete, update the order data
             db.query(
               "UPDATE orders SET ? WHERE id = ?",
               [orderData, orderId],
@@ -148,25 +153,38 @@ class OrderModel {
           }
 
           const orderItem = orderResult[index];
+
+          // Update the packaging for the current order item
           db.query(
-            "UPDATE product SET product_quantity = product_quantity + ? WHERE id = ?",
-            [orderItem.quantity, orderItem.product_id],
+            "UPDATE packaging SET quantity = quantity + ? WHERE id = ?",
+            [orderItem.quantity, orderItem.packaging_id],
             (err) => {
               if (err) return callback(err);
 
-              db.query(
-                "UPDATE packaging SET quantity = quantity + ? WHERE id = ?",
-                [orderItem.quantity, orderItem.packaging_id],
-                (err) => {
-                  if (err) return callback(err);
-                  updateProductAndPackaging(index + 1);
-                }
-              );
+              // Check if the product has already been updated
+              if (!updatedProductIds.includes(orderItem.product_id)) {
+                // Update the product quantity
+                db.query(
+                  "UPDATE product SET product_quantity = product_quantity + ? WHERE id = ?",
+                  [orderItem.quantity, orderItem.product_id],
+                  (err) => {
+                    if (err) return callback(err);
+
+                    // Add the product_id to the updatedProductIds array
+                    updatedProductIds.push(orderItem.product_id);
+                    updatePackagingAndProduct(index + 1); // Proceed to the next item
+                  }
+                );
+              } else {
+                // If product ID has been updated, just proceed to the next item
+                updatePackagingAndProduct(index + 1);
+              }
             }
           );
         }
 
-        updateProductAndPackaging(0);
+        // Start updating packaging and products
+        updatePackagingAndProduct(0);
       }
     );
   }

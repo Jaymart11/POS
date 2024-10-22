@@ -20,10 +20,7 @@ export const useCreateStockData = () => {
   const queryClient = useQueryClient();
   return useMutation(createStockData, {
     onSuccess: () => {
-      queryClient.invalidateQueries("stockData");
-      queryClient.invalidateQueries("productData");
-      queryClient.invalidateQueries("packagingData");
-      queryClient.invalidateQueries("lowQuantity");
+      queryClient.resetQueries();
     },
   });
 };
@@ -33,10 +30,7 @@ export const useUpdateStockData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => updateStockData(id, data), {
     onSuccess: () => {
-      queryClient.invalidateQueries("stockData");
-      queryClient.invalidateQueries("productData");
-      queryClient.invalidateQueries("packagingData");
-      queryClient.invalidateQueries("lowQuantity");
+      queryClient.resetQueries();
     },
   });
 };
@@ -46,9 +40,7 @@ export const useDeleteStockData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => deleteStockData(id, data), {
     onSuccess: () => {
-      queryClient.invalidateQueries("stockData");
-      queryClient.invalidateQueries("productData");
-      queryClient.invalidateQueries("packagingData");
+      queryClient.resetQueries();
     },
   });
 };

@@ -1,6 +1,7 @@
 // controllers/packagingController.js
 
 const packagingModel = require("../models/packagingModel.js");
+const { logQuantities } = require("../schedulers/packagingScheduler.js");
 
 exports.getAllPackagings = (req, res) => {
   packagingModel.getAllPackagings((err, packagings) => {
@@ -37,6 +38,7 @@ exports.createPackaging = (req, res) => {
       res.status(500).json({ error: "Internal server error" });
       return;
     }
+    logQuantities(true);
     res
       .status(201)
       .json({ message: "Packaging created successfully", id: result.insertId });

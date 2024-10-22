@@ -26,6 +26,7 @@ export const useCreateSettingData = () => {
   return useMutation(createSettingData, {
     onSuccess: () => {
       queryClient.invalidateQueries("settingData");
+      queryClient.invalidateQueries("lowQuantity");
     },
   });
 };
@@ -47,6 +48,7 @@ export const useDeleteSettingData = () => {
   return useMutation((id) => deleteSettingData(id), {
     onSuccess: () => {
       queryClient.invalidateQueries("settingData");
+      queryClient.invalidateQueries("lowQuantity");
     },
   });
 };

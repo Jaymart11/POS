@@ -14,7 +14,6 @@ class ProductModel {
 
     query += " ORDER BY p.category_id, p.order_num";
 
-    console.log(query);
     db.query(query, [categoryId], callback);
   }
 

@@ -20,8 +20,7 @@ export const useCreateOrderData = () => {
   const queryClient = useQueryClient();
   return useMutation(createOrderData, {
     onSuccess: () => {
-      queryClient.invalidateQueries("orderData");
-      queryClient.invalidateQueries("productData");
+      queryClient.resetQueries();
     },
   });
 };
@@ -31,8 +30,7 @@ export const useUpdateOrderData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => updateOrderData(id, data), {
     onSuccess: () => {
-      queryClient.invalidateQueries("orderData");
-      queryClient.invalidateQueries("productData");
+      queryClient.resetQueries();
     },
   });
 };
@@ -42,8 +40,7 @@ export const useDeleteOrderData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => deleteOrderData(id, data), {
     onSuccess: () => {
-      queryClient.invalidateQueries("orderData");
-      queryClient.invalidateQueries("productData");
+      queryClient.resetQueries();
     },
   });
 };

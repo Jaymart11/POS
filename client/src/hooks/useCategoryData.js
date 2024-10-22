@@ -21,7 +21,7 @@ export const useCreateCategoryData = () => {
   const queryClient = useQueryClient();
   return useMutation(createCategoryData, {
     onSuccess: () => {
-      queryClient.invalidateQueries("categoryData");
+      queryClient.resetQueries();
     },
   });
 };
@@ -31,7 +31,7 @@ export const useUpdateCategoryData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => updateCategoryData(id, data), {
     onSuccess: () => {
-      queryClient.invalidateQueries("categoryData");
+      queryClient.resetQueries();
     },
   });
 };
@@ -40,7 +40,7 @@ export const useUpdateCategoryOrderData = () => {
   const queryClient = useQueryClient();
   return useMutation((data) => updateCategoryOrderData(data), {
     onSuccess: () => {
-      queryClient.invalidateQueries("categoryData");
+      queryClient.resetQueries();
     },
   });
 };
@@ -50,7 +50,7 @@ export const useDeleteCategoryData = () => {
   const queryClient = useQueryClient();
   return useMutation((id) => deleteCategoryData(id), {
     onSuccess: () => {
-      queryClient.invalidateQueries("categoryData");
+      queryClient.resetQueries();
     },
   });
 };

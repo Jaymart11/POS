@@ -27,8 +27,6 @@ const CreateStockModal = ({ visible, onCancel, notifData = null }) => {
     }
   }, [notifData]);
 
-  console.log(form.getFieldValue());
-
   const handleOk = () => {
     form
       .validateFields()
