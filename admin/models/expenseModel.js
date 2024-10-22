@@ -26,7 +26,7 @@ class ExpenseModel {
         data.date[0]
       }' AND '${data.date[1]}' ${
         data.user_id !== 0 ? "AND o.user_id =" + data.user_id : ""
-      } WHERE pm.id != 1 GROUP BY pm.id, pm.name`,
+      } WHERE pm.id != 1 AND o.deleted_by IS NULL GROUP BY pm.id, pm.name`,
       callback
     );
   }
