@@ -232,7 +232,9 @@ class OrderModel {
         user_id !== 0 ? "AND o.user_id =" + user_id : ""
       }
         ) oi ON p.id = oi.product_id
-    WHERE p.deleted_by is null
+    WHERE (p.deleted_at IS NULL OR p.deleted_at BETWEEN '${date[0]}' AND '${
+        date[1]
+      }') 
     GROUP BY 
         c.id, c.name, p.id, p.product_name, oi.price_at_order
     ORDER BY 
@@ -263,7 +265,9 @@ class OrderModel {
         WHERE
             DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
         date[1]
-      }') AND n.deleted_by IS NULL
+      }') AND (n.deleted_at IS NULL OR n.deleted_at BETWEEN '${date[0]}' AND '${
+        date[1]
+      }') 
     ),
     MaxDates AS (
         SELECT
@@ -285,7 +289,9 @@ class OrderModel {
         WHERE
             DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
         date[1]
-      }') AND n.deleted_by IS NULL
+      }') AND (n.deleted_at IS NULL OR n.deleted_at BETWEEN '${date[0]}' AND '${
+        date[1]
+      }')
     ),
     StartEndQuantities AS (
         SELECT
@@ -426,7 +432,7 @@ class OrderModel {
         LEFT JOIN
             packaging n ON l.packaging_id = n.id
         WHERE
-            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${date[1]}') AND n.deleted_by IS NULL
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${date[1]}') AND (n.deleted_at IS NULL OR n.deleted_at BETWEEN '${date[0]}' AND '${date[1]}')
     ),
     MaxDates AS (
         SELECT
@@ -440,7 +446,7 @@ class OrderModel {
         LEFT JOIN
             packaging n ON l.packaging_id = n.id
         WHERE
-            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${date[1]}') AND n.deleted_by IS NULL
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${date[1]}') AND (n.deleted_at IS NULL OR n.deleted_at BETWEEN '${date[0]}' AND '${date[1]}')
     ),
     StartEndQuantities AS (
         SELECT
