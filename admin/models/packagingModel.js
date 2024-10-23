@@ -1,6 +1,7 @@
 // models/packagingModel.js
 
 const db = require("../database.js");
+const dayjs = require("dayjs");
 
 class PackagingModel {
   getAllPackagings(callback) {
@@ -12,7 +13,28 @@ class PackagingModel {
   }
 
   createPackaging(packaging, callback) {
-    db.query("INSERT INTO packaging SET ?", packaging, callback);
+    db.query("INSERT INTO packaging SET ?", packaging, (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+
+      const packagingId = result.insertId;
+
+      db.query(
+        `INSERT INTO packaging_quantity_log SET ?`,
+        {
+          packaging_id: packagingId,
+          start_quantity: packaging.quantity,
+          log_date: dayjs(new Date()).format("YYYY-MM-DD"),
+        },
+        (err, result) => {
+          if (err) {
+            return callback(err);
+          }
+          return callback(null, result);
+        }
+      );
+    });
   }
 
   updatePackaging(packagingId, packagingData, callback) {

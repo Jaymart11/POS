@@ -66,7 +66,16 @@ const CreateProductModal = ({ visible, onCancel, setCurrentCategory }) => {
           >
             <Input />
           </Form.Item>
-          <Form.Item name="product_quantity" label="Quantity">
+          <Form.Item
+            name="product_quantity"
+            label="Quantity"
+            rules={[
+              {
+                required: true,
+                message: "Please input the quantity!",
+              },
+            ]}
+          >
             <Input />
           </Form.Item>
           <Form.Item name="price" label="Price">

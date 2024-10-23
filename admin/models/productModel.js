@@ -1,6 +1,7 @@
 // models/productModel.js
 
 const db = require("../database.js");
+const dayjs = require("dayjs");
 
 class ProductModel {
   getAllProducts(categoryId, callback) {
@@ -49,6 +50,11 @@ class ProductModel {
         // Get the inserted product's ID
         const productId = result.insertId;
 
+        db.query(`INSERT INTO product_quantity_log SET ?`, {
+          product_id: productId,
+          start_quantity: product_quantity,
+          log_date: dayjs(new Date()).format("YYYY-MM-DD"),
+        });
         // Loop through the packaging array and insert into product_packaging table
         const productPackaging = packaging.map((packageId) => {
           return new Promise((resolve, reject) => {

@@ -79,7 +79,6 @@ exports.createProduct = (req, res) => {
       res.status(500).json({ error: "Internal server error" });
       return;
     }
-    productLogQuantities(true);
     res
       .status(201)
       .json({ message: "Product created successfully", id: result.insertId });

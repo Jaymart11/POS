@@ -263,11 +263,7 @@ class OrderModel {
       LEFT JOIN 
             category c ON c.id = n.category_id 
         WHERE
-            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
-        date[1]
-      }') AND (n.deleted_at IS NULL OR n.deleted_at BETWEEN '${date[0]}' AND '${
-        date[1]
-      }') 
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${date[1]}') AND (n.deleted_at IS NULL OR n.deleted_at BETWEEN '${date[0]}' AND '${date[1]}') 
     ),
     MaxDates AS (
         SELECT
@@ -287,11 +283,7 @@ class OrderModel {
         LEFT JOIN 
             category c ON c.id = n.category_id 
         WHERE
-            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${
-        date[1]
-      }') AND (n.deleted_at IS NULL OR n.deleted_at BETWEEN '${date[0]}' AND '${
-        date[1]
-      }')
+            DATE(l.log_date) BETWEEN DATE('${date[0]}') AND DATE('${date[1]}') AND (n.deleted_at IS NULL OR n.deleted_at BETWEEN '${date[0]}' AND '${date[1]}')
     ),
     StartEndQuantities AS (
         SELECT
@@ -326,10 +318,7 @@ class OrderModel {
         LEFT JOIN 
             product p ON oi.product_id = p.id
         WHERE 
-            o.deleted_by IS NULL AND o.order_date BETWEEN '${date[0]}' AND '${
-        date[1]
-      }' ${user_id !== 0 ? "AND o.user_id = " + user_id : ""}
-        GROUP BY 
+            o.deleted_by IS NULL AND o.order_date BETWEEN '${date[0]}' AND '${date[1]}' GROUP BY 
             p.id
     ),
     StockAdjustments AS (
@@ -340,10 +329,7 @@ class OrderModel {
         FROM 
             stock_adjustments 
         WHERE 
-            deleted_by IS NULL AND transaction_date BETWEEN '${date[0]}' AND '${
-        date[1]
-      }' ${user_id !== 0 ? "AND created_by = " + user_id : ""}
-        GROUP BY 
+            deleted_by IS NULL AND transaction_date BETWEEN '${date[0]}' AND '${date[1]}' GROUP BY 
             product_id
     ),    
   OrderQuantitiesBefore AS (
@@ -357,9 +343,7 @@ class OrderModel {
       LEFT JOIN
           product p ON oi.product_id = p.id
       WHERE
-        o.deleted_by IS NULL AND o.order_date BETWEEN DATE('${date[1]}') AND '${
-        date[0]
-      }'
+        o.deleted_by IS NULL AND o.order_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
       GROUP BY
           p.id
   ),
@@ -371,9 +355,7 @@ class OrderModel {
       FROM
           stock_adjustments
       WHERE
-        deleted_by IS NULL AND transaction_date BETWEEN DATE('${
-          date[1]
-        }') AND '${date[0]}'
+        deleted_by IS NULL AND transaction_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
       GROUP BY
           product_id
   ),
