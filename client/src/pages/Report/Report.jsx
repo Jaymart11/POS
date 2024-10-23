@@ -131,12 +131,8 @@ const Report = () => {
             style={{ color: record.deleted_by != null ? "red" : "white" }}
           >
             {record.deleted_by === null
-              ? dayjs(record.order_date.slice(0, -1)).format(
-                  "MMM DD, YYYY | hh:mm A"
-                )
-              : dayjs(record.deleted_at.slice(0, -1)).format(
-                  "MMM DD, YYYY | hh:mm A"
-                )}
+              ? dayjs(record.order_date).format("MMM DD, YYYY | hh:mm A")
+              : dayjs(record.deleted_at).format("MMM DD, YYYY | hh:mm A")}
           </Typography>
         </Space>
       ),
