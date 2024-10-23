@@ -62,22 +62,13 @@ const MenuListItem = ({ item }) => {
     }
   };
 
-  const packagingStatus = () => {
-    if (
-      total_packaging.some(
-        (tp) => tp.quantity > tp.packaging_stock_notification
-      )
-    ) {
-      return "white";
-    } else if (
-      total_packaging.some((tp) => tp.quantity >= 1) &&
-      total_packaging.some(
-        (tp) => tp.quantity <= tp.packaging_stock_notification
-      )
-    ) {
-      return "rgb(245, 199, 17)";
-    } else {
+  const packagingStatus = (quantity, packaging_stock_notification) => {
+    if (quantity === 0) {
       return "rgb(194,64,52)";
+    } else if (quantity > packaging_stock_notification) {
+      return "white";
+    } else if (quantity >= 1 && quantity <= packaging_stock_notification) {
+      return "rgb(245, 199, 17)";
     }
   };
 
@@ -120,16 +111,23 @@ const MenuListItem = ({ item }) => {
                 <b>Pkg Qty</b>
               </Text>
 
-              <Text style={{ margin: 0, color: packagingStatus() }}>
-                {total_packaging.map((tp, index) => {
-                  return (
-                    <span key={index}>
-                      {tp.packaging_name} : {tp.quantity}
-                      <br />
-                    </span>
-                  );
-                })}
-              </Text>
+              {total_packaging.map((tp, index) => {
+                return (
+                  <Text
+                    style={{
+                      margin: 0,
+                      color: packagingStatus(
+                        tp.quantity,
+                        tp.packaging_stock_notification
+                      ),
+                    }}
+                    key={index}
+                  >
+                    {tp.packaging_name} : {tp.quantity}
+                    <br />
+                  </Text>
+                );
+              })}
             </Flex>
             <Badge
               dot={false}

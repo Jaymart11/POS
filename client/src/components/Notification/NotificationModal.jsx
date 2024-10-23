@@ -38,7 +38,9 @@ const NotificationModal = ({ visible, onCancel, data, isLoading }) => {
       key: "quantity",
       render: (rec) => (
         <Typography
-          style={{ color: rec !== 0 ? "rgb(245, 199, 17)" : rgb(194, 64, 52) }}
+          style={{
+            color: rec !== 0 ? "rgb(245, 199, 17)" : "rgb(194, 64, 52)",
+          }}
         >
           {rec}
         </Typography>
