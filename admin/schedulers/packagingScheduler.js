@@ -1,4 +1,3 @@
-const cron = require("node-cron");
 const db = require("../database");
 const dayjs = require("dayjs");
 
@@ -26,20 +25,13 @@ const logQuantities = (isStart) => {
           if (err) throw err;
         });
       });
-      console.log("Quantities logged:", isStart ? "start" : "end");
+      console.log(
+        "Quantities logged:",
+        isStart ? "start" : "end",
+        dayjs(new Date()).format("YYYY-MM-DD")
+      );
     }
   );
 };
-
-// Schedule tasks
-// Log start quantities at the beginning of the day
-cron.schedule("0 0 * * *", () => {
-  logQuantities(true);
-});
-
-// Log end quantities at the end of the day
-cron.schedule("59 23 * * *", () => {
-  logQuantities(false);
-});
 
 module.exports = { logQuantities };
