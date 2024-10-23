@@ -176,7 +176,7 @@ const Report = () => {
             <Button
               danger
               disabled={
-                !isToday(new Date(record.order_date.slice(0, -1))) ||
+                !isToday(new Date(record.order_date)) ||
                 record.deleted_by !== null
               }
             >
