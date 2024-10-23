@@ -28,7 +28,7 @@ const logQuantities = (isStart) => {
       console.log(
         "Quantities logged:",
         isStart ? "start" : "end",
-        dayjs(new Date()).format("YYYY-MM-DD")
+        dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss")
       );
     }
   );
