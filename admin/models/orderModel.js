@@ -408,7 +408,8 @@ class OrderModel {
             l.log_date,
             n.name,
             COALESCE(l.start_quantity, 0) AS quantity,
-            ROW_NUMBER() OVER (PARTITION BY l.packaging_id ORDER BY l.log_date ASC) AS rn
+            ROW_NUMBER() OVER (PARTITION BY l.packaging_id ORDER BY l.log_date ASC) AS rn,
+            n.order_num
         FROM
             packaging_quantity_log l
         LEFT JOIN
@@ -422,7 +423,8 @@ class OrderModel {
             l.log_date,
             n.name,
             COALESCE(l.end_quantity, 0) AS quantity,
-            ROW_NUMBER() OVER (PARTITION BY l.packaging_id ORDER BY l.log_date DESC) AS rn
+            ROW_NUMBER() OVER (PARTITION BY l.packaging_id ORDER BY l.log_date DESC) AS rn,
+            n.order_num
         FROM
             packaging_quantity_log l
         LEFT JOIN
@@ -438,7 +440,9 @@ class OrderModel {
             min_log.quantity AS start_quantity,
             max_log.log_date AS end_log_date,
             max_log.name AS end_name,
-            max_log.quantity AS end_quantity
+            max_log.quantity AS end_quantity,
+            min_log.order_num as min_order_num,
+            max_log.order_num as max_order_num
         FROM
             (SELECT * FROM MinDates WHERE rn = 1) AS min_log
         JOIN
@@ -521,7 +525,9 @@ class OrderModel {
         COALESCE(sa.dmg_quantity, 0) AS damaged,
         COALESCE(sa.restk_quantity, 0) AS restock,
         COALESCE(oq.total_quantity, 0) AS releasing,
-        (seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0) AS end_quantity
+        (seq.start_quantity + COALESCE(sa.restk_quantity, 0)) - COALESCE(sa.dmg_quantity, 0) - COALESCE(oq.total_quantity, 0) AS end_quantity,
+        seq.min_order_num,
+        seq.max_order_num
     FROM
         StartEndQuantities seq
     LEFT JOIN
@@ -529,7 +535,9 @@ class OrderModel {
     LEFT JOIN 
         StockAdjustments sa ON sa.packaging_id = seq.packaging_id
     LEFT JOIN 
-        StartQuantity sq ON sq.packaging_id = seq.packaging_id`,
+        StartQuantity sq ON sq.packaging_id = seq.packaging_id
+    ORDER BY
+        seq.min_order_num, seq.max_order_num`,
       callback
     );
   }

@@ -61,6 +61,22 @@ exports.updatePackaging = (req, res) => {
   });
 };
 
+exports.updateOrderNumber = (req, res) => {
+  const packagingData = req.body;
+  packagingModel.updateOrderNumber(packagingData, (err, result) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+      return;
+    }
+    if (result.affectedRows === 0) {
+      res.status(404).json({ error: "Packaging not found" });
+      return;
+    }
+    res.json({ message: "Packaging order updated successfully" });
+  });
+};
+
 exports.deletePackaging = (req, res) => {
   const packagingId = req.params.id;
   packagingModel.deletePackaging(packagingId, (err, result) => {

@@ -5,6 +5,7 @@ import {
   createPackagingData,
   updatePackagingData,
   deletePackagingData,
+  updatePackagingOrderData,
 } from "../services/packagingService";
 
 // Read
@@ -29,6 +30,15 @@ export const useCreatePackagingData = () => {
 export const useUpdatePackagingData = () => {
   const queryClient = useQueryClient();
   return useMutation(({ id, data }) => updatePackagingData(id, data), {
+    onSuccess: () => {
+      queryClient.resetQueries();
+    },
+  });
+};
+
+export const useUpdatePackagingOrderData = () => {
+  const queryClient = useQueryClient();
+  return useMutation((data) => updatePackagingOrderData(data), {
     onSuccess: () => {
       queryClient.resetQueries();
     },
