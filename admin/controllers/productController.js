@@ -1,7 +1,6 @@
 // controllers/productController.js
 
 const productModel = require("../models/productModel.js");
-const { productLogQuantities } = require("../schedulers/productScheduler.js");
 
 exports.getAllProducts = (req, res) => {
   const categoryId = req.query.categoryId;
@@ -21,16 +20,51 @@ exports.getAllProducts = (req, res) => {
           packaging_name,
           quantity,
           packaging_stock_notification,
+          conversion_product_id,
+          conversion_product_name,
+          conversion_ratio,
           ...rest
         }
       ) => {
-        acc[id] = acc[id] || { ...rest, id, packaging_details: [] };
-        acc[id].packaging_details.push({
-          packaging_id,
-          packaging_name,
-          quantity,
-          packaging_stock_notification,
-        });
+        acc[id] = acc[id] || {
+          ...rest,
+          id,
+          packaging_details: [],
+          product_conversion: [],
+        };
+
+        // Check for duplicates in packaging_details based on packaging_id
+        if (
+          !acc[id].packaging_details.some(
+            (detail) => detail.packaging_id === packaging_id
+          )
+        ) {
+          acc[id].packaging_details.push({
+            packaging_id,
+            packaging_name,
+            quantity,
+            packaging_stock_notification,
+          });
+        }
+
+        // Check for duplicates in product_conversion based on conversion_product_id
+        if (
+          !acc[id].product_conversion.some(
+            (conversion) =>
+              conversion.conversion_product_id === conversion_product_id
+          )
+        ) {
+          acc[id].product_conversion.push({
+            conversion_product_id,
+            conversion_product_name,
+            conversion_ratio,
+          });
+        }
+
+        acc[id].product_conversion.sort(
+          (a, b) => a.conversion_ratio - b.conversion_ratio
+        );
+
         return acc;
       },
       {}

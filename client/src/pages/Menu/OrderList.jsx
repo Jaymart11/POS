@@ -11,7 +11,7 @@ import {
 } from "antd";
 import { OrderItemContext } from "../../stores/orderItemContext";
 import { OrderContext } from "../../stores/orderContext";
-import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
+import { MinusOutlined } from "@ant-design/icons";
 import { useCreateOrderData } from "../../hooks/useOrderData";
 import useNotification from "../../hooks/useNotification";
 
@@ -22,7 +22,7 @@ const OrderList = () => {
   const openNotificationWithIcon = useNotification();
   const {
     orderItem,
-    addItemToOrder,
+    // addItemToOrder,
     removeItemFromOrder,
     totalPayment,
     totalItems,
@@ -52,14 +52,14 @@ const OrderList = () => {
             <MinusOutlined />
           </Button>
           <p style={{ width: "20px", textAlign: "center" }}>{text}</p>
-          <Button
+          {/* <Button
             type="primary"
             shape="circle"
             style={{ backgroundColor: "rgb(40,128,99)" }}
             onClick={() => addItemToOrder({ product_id: product_id })}
           >
             <PlusOutlined />
-          </Button>
+          </Button> */}
         </div>
       ),
     },
@@ -84,14 +84,45 @@ const OrderList = () => {
         total_price: totalPayment() - (f.discount || 0),
       },
       items: orderItem.map(
-        ({ product_id, packaging_details, quantity, price_at_order }) => ({
+        ({
           product_id,
           packaging_details,
           quantity,
           price_at_order,
+          conversions,
+        }) => ({
+          product_id,
+          packaging_details,
+          quantity,
+          price_at_order,
+          conversions,
         })
       ),
     });
+
+    // console.log({
+    //   orderData: {
+    //     ...order,
+    //     ...f,
+    //     total_items: totalItems(),
+    //     total_price: totalPayment() - (f.discount || 0),
+    //   },
+    //   items: orderItem.map(
+    //     ({
+    //       product_id,
+    //       packaging_details,
+    //       quantity,
+    //       price_at_order,
+    //       conversions,
+    //     }) => ({
+    //       product_id,
+    //       packaging_details,
+    //       quantity,
+    //       price_at_order,
+    //       conversions,
+    //     })
+    //   ),
+    // });
     openNotificationWithIcon("success", "Order Saved!", "");
 
     form.resetFields();

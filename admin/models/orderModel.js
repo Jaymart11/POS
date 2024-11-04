@@ -48,42 +48,153 @@ class OrderModel {
       db.query(
         "INSERT INTO order_item (order_id, product_id, quantity, price_at_order) VALUES ?",
         [orderItemValues],
-        (err) => {
+        (err, result) => {
           if (err) return callback(err);
 
-          const quantityUpdates = orderItems.map((item) => {
-            return new Promise((resolve, reject) => {
-              // First, update the product's quantity
-              db.query(
-                "UPDATE product SET product_quantity = product_quantity - ? WHERE id = ?",
-                [item.quantity, item.product_id],
-                (err) => {
-                  if (err) return reject(err);
+          const orderItemIds = result.insertId; // Assume batch inserts return the first inserted id
 
-                  // If there are multiple packaging types, iterate over them to update each one
-                  const packagingPromises = item.packaging_details.map(
-                    (packaging) => {
-                      return new Promise(
-                        (resolvePackaging, rejectPackaging) => {
-                          db.query(
-                            "UPDATE packaging SET quantity = quantity - ? WHERE id = ?",
-                            [item.quantity, packaging.packaging_id],
-                            (err) => {
-                              if (err) rejectPackaging(err);
-                              else resolvePackaging();
-                            }
+          const quantityUpdates = orderItems.map((item, index) => {
+            return new Promise((resolve, reject) => {
+              // Proceed only if conversions array is defined and not empty
+              if (item.conversions && item.conversions.length > 0) {
+                // Check and update stock for each converted product
+                const conversionChecks = item.conversions.map((conversion) => {
+                  return new Promise((resolveCheck, rejectCheck) => {
+                    db.query(
+                      "SELECT product_quantity FROM product WHERE id = ?",
+                      [conversion.product_id],
+                      (err, results) => {
+                        if (err) return rejectCheck(err);
+
+                        const availableQuantity = results[0].product_quantity;
+                        if (availableQuantity < conversion.quantity) {
+                          return rejectCheck(
+                            new Error(
+                              `Insufficient stock for product ID ${conversion.product_id}`
+                            )
                           );
                         }
-                      );
-                    }
-                  );
+                        resolveCheck();
+                      }
+                    );
+                  });
+                });
 
-                  // Wait for all packaging updates to complete
-                  Promise.all(packagingPromises)
-                    .then(() => resolve())
-                    .catch((err) => reject(err));
-                }
-              );
+                Promise.all(conversionChecks)
+                  .then(() => {
+                    // Proceed with the main product quantity deduction
+                    db.query(
+                      "UPDATE product SET product_quantity = product_quantity - ? WHERE id = ?",
+                      [item.quantity, item.product_id],
+                      (err) => {
+                        if (err) return reject(err);
+
+                        // Update packaging quantities if applicable
+                        const packagingPromises = item.packaging_details.map(
+                          (packaging) => {
+                            return new Promise(
+                              (resolvePackaging, rejectPackaging) => {
+                                db.query(
+                                  "UPDATE packaging SET quantity = quantity - ? WHERE id = ?",
+                                  [item.quantity, packaging.packaging_id],
+                                  (err) => {
+                                    if (err) rejectPackaging(err);
+                                    else resolvePackaging();
+                                  }
+                                );
+                              }
+                            );
+                          }
+                        );
+
+                        // Insert conversions to converted_product table
+                        const orderItemId = orderItemIds + index;
+                        const conversionValues = item.conversions.map(
+                          (conversion) => [
+                            orderItemId,
+                            conversion.product_id,
+                            conversion.quantity,
+                          ]
+                        );
+
+                        const conversionPromise = new Promise(
+                          (resolveConversion, rejectConversion) => {
+                            db.query(
+                              "INSERT INTO converted_product (order_item_id, product_id, quantity) VALUES ?",
+                              [conversionValues],
+                              (err) => {
+                                if (err) rejectConversion(err);
+
+                                // Deduct quantity in product table for each converted product
+                                const productUpdatePromises =
+                                  item.conversions.map((conversion) => {
+                                    return new Promise(
+                                      (
+                                        resolveProductUpdate,
+                                        rejectProductUpdate
+                                      ) => {
+                                        db.query(
+                                          "UPDATE product SET product_quantity = product_quantity - ? WHERE id = ?",
+                                          [
+                                            conversion.quantity,
+                                            conversion.product_id,
+                                          ],
+                                          (err) => {
+                                            if (err) rejectProductUpdate(err);
+                                            else resolveProductUpdate();
+                                          }
+                                        );
+                                      }
+                                    );
+                                  });
+
+                                Promise.all(productUpdatePromises)
+                                  .then(() => resolveConversion())
+                                  .catch((err) => rejectConversion(err));
+                              }
+                            );
+                          }
+                        );
+
+                        // Wait for all packaging updates, conversions, and product updates to complete
+                        Promise.all([...packagingPromises, conversionPromise])
+                          .then(() => resolve())
+                          .catch((err) => reject(err));
+                      }
+                    );
+                  })
+                  .catch((err) => reject(err));
+              } else {
+                // No conversions, proceed with main product and packaging updates only
+                db.query(
+                  "UPDATE product SET product_quantity = product_quantity - ? WHERE id = ?",
+                  [item.quantity, item.product_id],
+                  (err) => {
+                    if (err) return reject(err);
+
+                    const packagingPromises = item.packaging_details.map(
+                      (packaging) => {
+                        return new Promise(
+                          (resolvePackaging, rejectPackaging) => {
+                            db.query(
+                              "UPDATE packaging SET quantity = quantity - ? WHERE id = ?",
+                              [item.quantity, packaging.packaging_id],
+                              (err) => {
+                                if (err) rejectPackaging(err);
+                                else resolvePackaging();
+                              }
+                            );
+                          }
+                        );
+                      }
+                    );
+
+                    Promise.all(packagingPromises)
+                      .then(() => resolve())
+                      .catch((err) => reject(err));
+                  }
+                );
+              }
             });
           });
 
@@ -132,6 +243,7 @@ class OrderModel {
   }
 
   deleteOrder(orderId, orderData, callback) {
+    console.log(orderData);
     db.query(
       "SELECT oi.order_id, oi.product_id, oi.quantity, pp.packaging_id FROM order_item oi LEFT JOIN product_packaging pp ON pp.product_id = oi.product_id WHERE order_id = ?",
       [orderId],
@@ -163,22 +275,77 @@ class OrderModel {
 
               // Check if the product has already been updated
               if (!updatedProductIds.includes(orderItem.product_id)) {
-                // Update the product quantity
+                // Query to get converted products for the current order
                 db.query(
-                  "UPDATE product SET product_quantity = product_quantity + ? WHERE id = ?",
-                  [orderItem.quantity, orderItem.product_id],
-                  (err) => {
+                  "SELECT cp.product_id, cp.quantity, pc.conversion_ratio FROM converted_product cp LEFT JOIN order_item oi ON oi.id = cp.order_item_id LEFT JOIN product_conversion pc ON cp.product_id = pc.conversion_product_id WHERE oi.order_id = ?",
+                  [orderId],
+                  (err, conversionResults) => {
                     if (err) return callback(err);
+                    // Update each converted product
+                    let pendingUpdates = conversionResults.length;
 
-                    // Add the product_id to the updatedProductIds array
-                    updatedProductIds.push(orderItem.product_id);
-                    updatePackagingAndProduct(index + 1); // Proceed to the next item
+                    // If no converted products, proceed to update the main product
+                    // updateMainProductQuantity(orderItem, index, pendingUpdates);
+                    if (pendingUpdates !== 0) {
+                      let totalDeduction = 0;
+                      conversionResults.forEach((convertedProduct) => {
+                        db.query(
+                          "UPDATE product SET product_quantity = product_quantity + ? WHERE id = ?",
+                          [
+                            convertedProduct.quantity,
+                            convertedProduct.product_id,
+                          ],
+                          (err) => {
+                            if (err) return callback(err);
+
+                            // Decrement the pending updates counter
+                            pendingUpdates--;
+                            totalDeduction +=
+                              convertedProduct.quantity /
+                              convertedProduct.conversion_ratio;
+                            // Once all converted products are updated, update the main product
+                            console.log(
+                              convertedProduct.quantity,
+                              parseInt(convertedProduct.conversion_ratio)
+                            );
+                            if (
+                              pendingUpdates === 0 &&
+                              orderItem.quantity - totalDeduction !== 0
+                            ) {
+                              updateMainProductQuantity(
+                                {
+                                  ...orderItem,
+                                  quantity: orderItem.quantity - totalDeduction,
+                                },
+                                index
+                              );
+                            }
+                          }
+                        );
+                      });
+                    } else {
+                      updateMainProductQuantity(orderItem, index);
+                    }
                   }
                 );
               } else {
                 // If product ID has been updated, just proceed to the next item
                 updatePackagingAndProduct(index + 1);
               }
+            }
+          );
+        }
+
+        // Function to update the main product quantity
+        function updateMainProductQuantity(orderItem, index) {
+          db.query(
+            "UPDATE product SET product_quantity = product_quantity + ? WHERE id = ?",
+            [orderItem.quantity, orderItem.product_id],
+            (err) => {
+              if (err) return callback(err);
+              // Add the product_id to the updatedProductIds array
+              updatedProductIds.push(orderItem.product_id);
+              updatePackagingAndProduct(index + 1); // Proceed to the next item
             }
           );
         }
@@ -309,17 +476,61 @@ class OrderModel {
     ),
     OrderQuantities AS (
         SELECT 
-            p.id AS product_id,
-            COALESCE(SUM(oi.quantity), 0) AS total_quantity
-        FROM 
-            orders o
-        LEFT JOIN 
-            order_item oi ON o.id = oi.order_id
-        LEFT JOIN 
-            product p ON oi.product_id = p.id
-        WHERE 
-            o.deleted_by IS NULL AND o.order_date BETWEEN '${date[0]}' AND '${date[1]}' GROUP BY 
-            p.id
+          product_id, 
+          SUM(total_quantity) AS total_quantity
+      FROM (
+          SELECT
+              p.id AS product_id,
+              ROUND(COALESCE(SUM(oi.quantity - COALESCE(ap.total_adjusted_quantity, 0)), 0)) AS total_quantity
+          FROM
+              orders o
+          LEFT JOIN
+              order_item oi ON o.id = oi.order_id
+          LEFT JOIN (
+              SELECT
+                  cp.order_item_id,
+                  SUM(cp.quantity / NULLIF(pc.conversion_ratio, 0)) AS total_adjusted_quantity
+              FROM 
+                  converted_product cp
+              LEFT JOIN 
+                  order_item oi ON oi.id = cp.order_item_id
+              LEFT JOIN 
+                  orders o ON o.id = oi.order_id
+              LEFT JOIN 
+                  product_conversion pc ON cp.product_id = pc.conversion_product_id
+              WHERE
+                  o.deleted_by IS NULL 
+                  AND o.order_date BETWEEN '${date[0]}' AND '${date[1]}'
+              GROUP BY 
+                  cp.order_item_id
+          ) ap ON oi.id = ap.order_item_id
+          LEFT JOIN
+              product p ON oi.product_id = p.id
+          WHERE
+              o.deleted_by IS NULL 
+              AND o.order_date BETWEEN '${date[0]}' AND '${date[1]}'
+          GROUP BY
+              p.id
+
+          UNION ALL
+
+          SELECT
+              cp.product_id,
+              SUM(cp.quantity) AS total_quantity
+          FROM
+              converted_product cp
+          LEFT JOIN 
+              order_item oi ON oi.id = cp.order_item_id
+          LEFT JOIN 
+              orders o ON o.id = oi.order_id
+          WHERE
+              o.deleted_by IS NULL 
+              AND o.order_date BETWEEN '${date[0]}' AND '${date[1]}'
+          GROUP BY
+              cp.product_id
+      ) AS combined_quantities
+      GROUP BY 
+          product_id
     ),
     StockAdjustments AS (
         SELECT 
@@ -333,19 +544,62 @@ class OrderModel {
             product_id
     ),    
   OrderQuantitiesBefore AS (
-      SELECT
-          p.id AS product_id,
-          COALESCE(SUM(oi.quantity), 0) AS total_quantity
-      FROM
-          orders o
-      LEFT JOIN
-          order_item oi ON o.id = oi.order_id
-      LEFT JOIN
-          product p ON oi.product_id = p.id
-      WHERE
-        o.deleted_by IS NULL AND o.order_date BETWEEN DATE('${date[1]}') AND '${date[0]}'
-      GROUP BY
-          p.id
+      SELECT 
+          product_id, 
+          SUM(total_quantity) AS total_quantity
+      FROM (
+          SELECT
+              p.id AS product_id,
+              ROUND(COALESCE(SUM(oi.quantity - COALESCE(ap.total_adjusted_quantity, 0)), 0)) AS total_quantity
+          FROM
+              orders o
+          LEFT JOIN
+              order_item oi ON o.id = oi.order_id
+          LEFT JOIN (
+              SELECT
+                  cp.order_item_id,
+                  SUM(cp.quantity / NULLIF(pc.conversion_ratio, 0)) AS total_adjusted_quantity
+              FROM 
+                  converted_product cp
+              LEFT JOIN 
+                  order_item oi ON oi.id = cp.order_item_id
+              LEFT JOIN 
+                  orders o ON o.id = oi.order_id
+              LEFT JOIN 
+                  product_conversion pc ON cp.product_id = pc.conversion_product_id
+              WHERE
+                  o.deleted_by IS NULL 
+                  AND o.order_date BETWEEN '${date[1]}' AND '${date[0]}'
+              GROUP BY 
+                  cp.order_item_id
+          ) ap ON oi.id = ap.order_item_id
+          LEFT JOIN
+              product p ON oi.product_id = p.id
+          WHERE
+              o.deleted_by IS NULL 
+              AND o.order_date BETWEEN '${date[1]}' AND '${date[0]}'
+          GROUP BY
+              p.id
+
+          UNION ALL
+
+          SELECT
+              cp.product_id,
+              SUM(cp.quantity) AS total_quantity
+          FROM
+              converted_product cp
+          LEFT JOIN 
+              order_item oi ON oi.id = cp.order_item_id
+          LEFT JOIN 
+              orders o ON o.id = oi.order_id
+          WHERE
+              o.deleted_by IS NULL 
+              AND o.order_date BETWEEN '${date[1]}' AND '${date[0]}'
+          GROUP BY
+              cp.product_id
+      ) AS combined_quantities
+      GROUP BY 
+          product_id
   ),
   StockAdjustmentsBefore AS (
       SELECT

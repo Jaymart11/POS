@@ -34,7 +34,8 @@ exports.createOrder = (req, res) => {
   const { orderData, items } = req.body;
   orderModel.createOrder(orderData, items, (err, result) => {
     if (err) {
-      res.status(500).json({ error: "Internal server error" });
+      console.log(err);
+      res.status(500).json(err);
       return;
     }
     res

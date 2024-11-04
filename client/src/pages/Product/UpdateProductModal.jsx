@@ -1,5 +1,8 @@
-import { Modal, Form, Input, Select, Button } from "antd";
-import { useUpdateProductData } from "../../hooks/useProductData";
+import { Modal, Form, Input, Select, Button, InputNumber } from "antd";
+import {
+  useUpdateProductData,
+  useProductData,
+} from "../../hooks/useProductData";
 import { useCategoryData } from "../../hooks/useCategoryData";
 import { usePackagingData } from "../../hooks/usePackagingData";
 import useNotification from "../../hooks/useNotification";
@@ -15,6 +18,7 @@ const CreateProductModal = ({
   const { mutate, isLoading } = useUpdateProductData();
   const { data: catData, isLoading: catLoading } = useCategoryData();
   const { data: packData, isLoading: packLoading } = usePackagingData();
+  const { data: prodData, isLoading: prodLoading } = useProductData();
 
   const openNotificationWithIcon = useNotification();
   const [form] = Form.useForm();
@@ -22,11 +26,15 @@ const CreateProductModal = ({
 
   useEffect(() => {
     if (product) {
-      console.log(product);
       form.setFieldsValue({
         ...product,
         packaging: [...product.packaging_details.map((p) => p.packaging_id)],
         packaging_details: undefined,
+        product_conversion: product.product_conversion.some((item) =>
+          Object.values(item).some((value) => value === null)
+        )
+          ? undefined
+          : product.product_conversion,
       });
     }
   }, [product, form]);
@@ -154,6 +162,72 @@ const CreateProductModal = ({
                     icon={<PlusOutlined />}
                   >
                     Add packaging field
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
+          <Form.List name="product_conversion">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ name, ...field }) => (
+                  <Form.Item
+                    label={
+                      <>
+                        Product Conversion {name + 1} &nbsp;&nbsp;
+                        <MinusCircleOutlined
+                          style={{ color: "red" }}
+                          onClick={() => remove(name)}
+                        />
+                      </>
+                    }
+                    required={false}
+                    key={field.key}
+                  >
+                    <Form.Item
+                      {...field}
+                      name={[name, "conversion_product_id"]}
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select a product!",
+                        },
+                      ]}
+                    >
+                      <Select
+                        loading={prodLoading}
+                        options={prodData
+                          .filter(({ id }) => id !== product.id)
+                          ?.map((pack) => ({
+                            label: pack.product_name,
+                            value: pack.id,
+                          }))}
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      {...field}
+                      name={[name, "conversion_ratio"]}
+                      rules={[
+                        {
+                          required: true,
+                        },
+                      ]}
+                      noStyle
+                    >
+                      <InputNumber step="0.1" style={{ width: "100%" }} />
+                    </Form.Item>
+                  </Form.Item>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => {
+                      add();
+                    }}
+                    style={{ width: "100%" }}
+                    icon={<PlusOutlined />}
+                  >
+                    Add conversion field
                   </Button>
                 </Form.Item>
               </>

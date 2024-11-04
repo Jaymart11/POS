@@ -35,7 +35,7 @@ const MenuList = () => {
       >
         <Row gutter={[16, 16]}>
           {prodData?.map((prod) => (
-            <MenuListItem key={prod.id} item={prod} />
+            <MenuListItem key={prod.id} item={prod} prod={prodData} />
           ))}
         </Row>
       </div>

@@ -2,24 +2,19 @@
 import { Card, Col, Typography, Badge, Flex } from "antd";
 import { OrderItemContext } from "../../stores/orderItemContext";
 import { useContext } from "react";
+import useNotification from "../../hooks/useNotification";
 
 const { Text, Title } = Typography;
 
-const MenuListItem = ({ item }) => {
-  const { orderItem, addItemToOrder, totalPackagingItem } =
+const MenuListItem = ({ item, prod }) => {
+  const openNotificationWithIcon = useNotification();
+  const { orderItem, addItemToOrder, totalPackagingItem, totalProductItem } =
     useContext(OrderItemContext);
-
-  const handleAdd = () => {
-    addItemToOrder({
-      product_id: item.id,
-      name: item.product_name,
-      packaging_details: item.packaging_details,
-      price_at_order: item.price,
-    });
-  };
 
   const currentQuantity =
     orderItem?.filter((or) => or.product_id === item.id)?.[0]?.quantity || 0;
+
+  // const remainingQuantity = item.product_quantity - currentQuantity;
 
   const total_packaging = item.packaging_details.map((pd) => ({
     ...pd,
@@ -28,12 +23,82 @@ const MenuListItem = ({ item }) => {
       : pd.quantity,
   }));
 
-  const qtyStatus = () => {
-    const remainingQuantity = item.product_quantity - currentQuantity;
+  const remainingQuantity = totalProductItem()[item.id]
+    ? item.product_quantity - totalProductItem()[item.id]
+    : item.product_quantity;
 
+  const handleAdd = () => {
+    if (remainingQuantity > 0) {
+      // Add main product if in stock
+      addItemToOrder({
+        product_id: item.id,
+        name: item.product_name,
+        packaging_details: item.packaging_details,
+        price_at_order: item.price,
+        conversions: [],
+      });
+    } else {
+      // Main product is out of stock, use conversions
+      let requiredQuantity = 1; // Quantity we want to fulfill
+      const conversions = [];
+
+      for (const conversion of item.product_conversion) {
+        const { conversion_product_id, conversion_ratio } = conversion;
+
+        const conversionStock =
+          prod.filter(({ id }) => id == conversion_product_id)[0]
+            ?.product_quantity -
+            (totalProductItem()[conversion_product_id] || 0) || 0;
+        const conversionNeeded =
+          requiredQuantity * parseFloat(conversion_ratio);
+
+        if (conversionStock > 0) {
+          if (conversionStock >= conversionNeeded) {
+            conversions.push({
+              product_id: conversion_product_id,
+              quantity: conversionNeeded,
+              conversion_ratio,
+            });
+            requiredQuantity = 0; // Order fulfilled
+            break;
+          } else {
+            // Partial stock, add available amount and adjust requiredQuantity
+            const partialQuantity =
+              conversionStock / parseFloat(conversion_ratio);
+            conversions.push({
+              product_id: conversion_product_id,
+              quantity: conversionStock,
+              conversion_ratio,
+            });
+            requiredQuantity -= partialQuantity; // Decrease remaining requirement
+          }
+        }
+      }
+
+      // Check if we managed to fulfill the entire requiredQuantity
+      if (requiredQuantity > 0) {
+        openNotificationWithIcon(
+          "error",
+          "Insufficient stock for product and conversions."
+        );
+        return;
+      }
+
+      // Add the main product with conversion items
+      addItemToOrder({
+        product_id: item.id,
+        name: item.product_name,
+        packaging_details: item.packaging_details,
+        price_at_order: item.price,
+        conversions: conversions,
+      });
+    }
+  };
+
+  const qtyStatus = () => {
     if (
-      remainingQuantity === 0 ||
-      total_packaging.some((tp) => tp.quantity === 0)
+      remainingQuantity <= 0 ||
+      total_packaging.some((tp) => tp.quantity <= 0)
     ) {
       return "rgb(194, 64, 52)";
     } else if (
@@ -49,12 +114,11 @@ const MenuListItem = ({ item }) => {
   };
 
   const productStatus = () => {
-    const remainingProduct = item.product_quantity - currentQuantity;
-    if (remainingProduct > item.stock_notification) {
+    if (remainingQuantity > item.stock_notification) {
       return "white";
     } else if (
-      remainingProduct >= 1 &&
-      remainingProduct <= item.stock_notification
+      remainingQuantity >= 1 &&
+      remainingQuantity <= item.stock_notification
     ) {
       return "rgb(245, 199, 17)";
     } else {
@@ -63,13 +127,17 @@ const MenuListItem = ({ item }) => {
   };
 
   const packagingStatus = (quantity, packaging_stock_notification) => {
-    if (quantity === 0) {
+    if (quantity <= 0) {
       return "rgb(194,64,52)";
     } else if (quantity > packaging_stock_notification) {
       return "white";
     } else if (quantity >= 1 && quantity <= packaging_stock_notification) {
       return "rgb(245, 199, 17)";
     }
+  };
+
+  const notif = () => {
+    openNotificationWithIcon("error", "Insufficient stock for packaging.");
   };
 
   return (
@@ -84,14 +152,11 @@ const MenuListItem = ({ item }) => {
             width: "100%",
           }}
           onClick={
-            item.product_quantity - currentQuantity > 0 &&
-            !total_packaging.some((tp) => tp.quantity === 0)
-              ? handleAdd
-              : null
+            total_packaging.some((tp) => tp.quantity === 0) ? notif : handleAdd
           }
         >
           <Title level={3} style={{ margin: 0 }}>
-            {item.product_name}{" "}
+            {item.product_name}
           </Title>
 
           <Title
@@ -104,7 +169,7 @@ const MenuListItem = ({ item }) => {
           <Flex justify="space-between" align="center">
             <Flex vertical>
               <Text style={{ margin: 0, color: productStatus() }}>
-                Qty: {item.product_quantity - currentQuantity}
+                Qty: {remainingQuantity > 0 ? remainingQuantity : 0}
               </Text>
               <Text style={{ margin: 0 }}>
                 <br />
