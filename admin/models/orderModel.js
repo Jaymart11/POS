@@ -244,7 +244,7 @@ class OrderModel {
 
   deleteOrder(orderId, orderData, callback) {
     db.query(
-      "SELECT oi.order_id, oi.product_id, oi.quantity, pp.packaging_id FROM order_item oi LEFT JOIN product_packaging pp ON pp.product_id = oi.product_id WHERE order_id = ?",
+      "SELECT oi.order_id, oi.product_id, oi.quantity, pp.packaging_id, oi.id as order_item_id FROM order_item oi LEFT JOIN product_packaging pp ON pp.product_id = oi.product_id WHERE order_id = ?",
       [orderId],
       (err, orderResult) => {
         if (err) return callback(err);
@@ -276,8 +276,8 @@ class OrderModel {
               if (!updatedProductIds.includes(orderItem.product_id)) {
                 // Query to get converted products for the current order
                 db.query(
-                  "SELECT cp.product_id, cp.quantity, pc.conversion_ratio FROM converted_product cp LEFT JOIN order_item oi ON oi.id = cp.order_item_id LEFT JOIN product_conversion pc ON cp.product_id = pc.conversion_product_id WHERE oi.order_id = ?",
-                  [orderId],
+                  "SELECT cp.product_id, cp.quantity, pc.conversion_ratio, oi.product_id as main_product FROM converted_product cp LEFT JOIN order_item oi ON oi.id = cp.order_item_id LEFT JOIN product_conversion pc ON cp.product_id = pc.conversion_product_id WHERE oi.id = ?",
+                  [orderItem.order_item_id],
                   (err, conversionResults) => {
                     if (err) return callback(err);
                     // Update each converted product
@@ -303,14 +303,15 @@ class OrderModel {
                               convertedProduct.quantity /
                               convertedProduct.conversion_ratio;
                             // Once all converted products are updated, update the main product
-                            if (
-                              pendingUpdates === 0 &&
-                              orderItem.quantity - totalDeduction !== 0
-                            ) {
+                            if (pendingUpdates === 0) {
                               updateMainProductQuantity(
                                 {
                                   ...orderItem,
-                                  quantity: orderItem.quantity - totalDeduction,
+                                  quantity:
+                                    orderItem.product_id ===
+                                    convertedProduct.main_product
+                                      ? orderItem.quantity - totalDeduction
+                                      : orderItem.quantity,
                                 },
                                 index
                               );
