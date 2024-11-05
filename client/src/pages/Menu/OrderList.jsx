@@ -192,10 +192,10 @@ const OrderList = () => {
                       marginBottom: "8px",
                     }}
                   >
-                    <Col offset={2} span={11} style={{ fontSize: "22px" }}>
+                    <Col offset={1} span={11} style={{ fontSize: "22px" }}>
                       {record.name}
                     </Col>
-                    <Col span={11} style={{ fontSize: "22px" }}>
+                    <Col span={12} style={{ fontSize: "22px" }}>
                       x
                       {record.quantity -
                         productConversionSums.find(
@@ -214,10 +214,10 @@ const OrderList = () => {
                       marginBottom: "8px",
                     }}
                   >
-                    <Col offset={2} span={11} style={{ fontSize: "22px" }}>
+                    <Col offset={1} span={11} style={{ fontSize: "22px" }}>
                       {p.conversion_product_name}
                     </Col>
-                    <Col span={11} style={{ fontSize: "22px" }}>
+                    <Col span={12} style={{ fontSize: "22px" }}>
                       x{p.quantity}
                     </Col>
                   </Row>
@@ -228,6 +228,7 @@ const OrderList = () => {
           expandedRowKeys: orderItem
             .filter((item) => item.conversions?.length)
             .map((item) => item.key),
+          showExpandColumn: false,
         }}
       />
 
