@@ -8,6 +8,8 @@ import {
   Segmented,
   Input,
   Popconfirm,
+  Row,
+  Col,
 } from "antd";
 import { OrderItemContext } from "../../stores/orderItemContext";
 import { OrderContext } from "../../stores/orderContext";
@@ -111,6 +113,21 @@ const OrderList = () => {
     openNotificationWithIcon("danger", "Order Failed!", errorInfo);
   };
 
+  let productConversionSums = orderItem.map((product) => {
+    let conversionSum = product.conversions.reduce((sum, conversion) => {
+      return (
+        sum + conversion.quantity / parseFloat(conversion.conversion_ratio)
+      );
+    }, 0);
+
+    return {
+      product_id: product.product_id,
+      conversionSum: conversionSum,
+    };
+  });
+
+  console.log(productConversionSums);
+
   return (
     <div
       style={{
@@ -161,23 +178,52 @@ const OrderList = () => {
         scroll={{ x: "max-content" }}
         expandable={{
           expandedRowRender: (record) =>
-            record.conversions?.length
-              ? record.conversions.map((p) => (
-                  <p
+            record.conversions?.length ? (
+              <>
+                {record.quantity -
+                productConversionSums.find(
+                  (pc) => pc.product_id === record.product_id
+                )?.conversionSum ? (
+                  <Row
+                    key={record.product_id}
                     style={{
-                      display: "flex",
-                      justifyContent: "space-around",
                       color: "rgb(40, 128, 99)",
                       fontWeight: "bold",
-                      fontSize: "20px",
+                      marginBottom: "8px",
                     }}
-                    key={p.conversion_product_name}
                   >
-                    <span>{p.conversion_product_name}</span>{" "}
-                    <span>x{p.quantity}</span>
-                  </p>
-                ))
-              : null,
+                    <Col offset={2} span={11} style={{ fontSize: "22px" }}>
+                      {record.name}
+                    </Col>
+                    <Col span={11} style={{ fontSize: "22px" }}>
+                      x
+                      {record.quantity -
+                        productConversionSums.find(
+                          (pc) => pc.product_id === record.product_id
+                        )?.conversionSum}
+                    </Col>
+                  </Row>
+                ) : null}
+
+                {record.conversions.map((p) => (
+                  <Row
+                    key={p.conversion_product_name}
+                    style={{
+                      color: "rgb(40, 128, 99)",
+                      fontWeight: "bold",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <Col offset={2} span={11} style={{ fontSize: "22px" }}>
+                      {p.conversion_product_name}
+                    </Col>
+                    <Col span={11} style={{ fontSize: "22px" }}>
+                      x{p.quantity}
+                    </Col>
+                  </Row>
+                ))}
+              </>
+            ) : null,
           rowExpandable: (record) => !!record.conversions?.length,
           expandedRowKeys: orderItem
             .filter((item) => item.conversions?.length)
