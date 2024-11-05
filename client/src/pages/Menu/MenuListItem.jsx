@@ -43,7 +43,11 @@ const MenuListItem = ({ item, prod }) => {
       const conversions = [];
 
       for (const conversion of item.product_conversion) {
-        const { conversion_product_id, conversion_ratio } = conversion;
+        const {
+          conversion_product_id,
+          conversion_ratio,
+          conversion_product_name,
+        } = conversion;
 
         const conversionStock =
           prod.filter(({ id }) => id == conversion_product_id)[0]
@@ -58,6 +62,7 @@ const MenuListItem = ({ item, prod }) => {
               product_id: conversion_product_id,
               quantity: conversionNeeded,
               conversion_ratio,
+              conversion_product_name,
             });
             requiredQuantity = 0; // Order fulfilled
             break;
@@ -69,6 +74,7 @@ const MenuListItem = ({ item, prod }) => {
               product_id: conversion_product_id,
               quantity: conversionStock,
               conversion_ratio,
+              conversion_product_name,
             });
             requiredQuantity -= partialQuantity; // Decrease remaining requirement
           }

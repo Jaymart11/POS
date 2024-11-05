@@ -99,30 +99,6 @@ const OrderList = () => {
         })
       ),
     });
-
-    // console.log({
-    //   orderData: {
-    //     ...order,
-    //     ...f,
-    //     total_items: totalItems(),
-    //     total_price: totalPayment() - (f.discount || 0),
-    //   },
-    //   items: orderItem.map(
-    //     ({
-    //       product_id,
-    //       packaging_details,
-    //       quantity,
-    //       price_at_order,
-    //       conversions,
-    //     }) => ({
-    //       product_id,
-    //       packaging_details,
-    //       quantity,
-    //       price_at_order,
-    //       conversions,
-    //     })
-    //   ),
-    // });
     openNotificationWithIcon("success", "Order Saved!", "");
 
     form.resetFields();
@@ -183,7 +159,32 @@ const OrderList = () => {
         pagination={false}
         locale={{ emptyText: "No Order Yet" }}
         scroll={{ x: "max-content" }}
+        expandable={{
+          expandedRowRender: (record) =>
+            record.conversions?.length
+              ? record.conversions.map((p) => (
+                  <p
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-around",
+                      color: "rgb(40, 128, 99)",
+                      fontWeight: "bold",
+                      fontSize: "20px",
+                    }}
+                    key={p.conversion_product_name}
+                  >
+                    <span>{p.conversion_product_name}</span>{" "}
+                    <span>x{p.quantity}</span>
+                  </p>
+                ))
+              : null,
+          rowExpandable: (record) => !!record.conversions?.length,
+          expandedRowKeys: orderItem
+            .filter((item) => item.conversions?.length)
+            .map((item) => item.key),
+        }}
       />
+
       <Card style={{ marginTop: "10px" }}>
         <Form
           form={form}

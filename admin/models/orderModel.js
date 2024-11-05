@@ -243,7 +243,6 @@ class OrderModel {
   }
 
   deleteOrder(orderId, orderData, callback) {
-    console.log(orderData);
     db.query(
       "SELECT oi.order_id, oi.product_id, oi.quantity, pp.packaging_id FROM order_item oi LEFT JOIN product_packaging pp ON pp.product_id = oi.product_id WHERE order_id = ?",
       [orderId],
@@ -304,10 +303,6 @@ class OrderModel {
                               convertedProduct.quantity /
                               convertedProduct.conversion_ratio;
                             // Once all converted products are updated, update the main product
-                            console.log(
-                              convertedProduct.quantity,
-                              parseInt(convertedProduct.conversion_ratio)
-                            );
                             if (
                               pendingUpdates === 0 &&
                               orderItem.quantity - totalDeduction !== 0
