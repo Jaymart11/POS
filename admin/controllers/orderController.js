@@ -244,9 +244,9 @@ exports.exportReport = (req, res) => {
             }
             productRow = worksheet.addRow({
               product_name: row.product_name,
-              price: parseInt(row.price),
-              total_quantity: parseInt(row.total_quantity),
-              total_sales: parseInt(row.total_sales),
+              price: parseFloat(row.price),
+              total_quantity: parseFloat(row.total_quantity),
+              total_sales: parseFloat(row.total_sales),
             });
 
             productRow.eachCell({ includeEmpty: true }, (cell) => {
@@ -254,7 +254,7 @@ exports.exportReport = (req, res) => {
                 size: 12,
               };
             });
-            grossSales += parseInt(row.total_sales);
+            grossSales += parseFloat(row.total_sales);
           });
 
           gross = worksheet.addRow({
@@ -290,12 +290,16 @@ exports.exportReport = (req, res) => {
                 worksheet.addRow([
                   "Expenses",
                   expense.name,
-                  parseInt(expense.amount),
+                  parseFloat(expense.amount),
                 ]);
-                expenseTotal += parseInt(expense.amount);
+                expenseTotal += parseFloat(expense.amount);
               } else {
-                worksheet.addRow(["", expense.name, parseInt(expense.amount)]);
-                expenseTotal += parseInt(expense.amount);
+                worksheet.addRow([
+                  "",
+                  expense.name,
+                  parseFloat(expense.amount),
+                ]);
+                expenseTotal += parseFloat(expense.amount);
               }
             });
 
@@ -316,9 +320,9 @@ exports.exportReport = (req, res) => {
                   online.name,
                   "",
                   "",
-                  parseInt(online.total_price),
+                  parseFloat(online.total_price),
                 ]);
-                opTotal += parseInt(online.total_price);
+                opTotal += parseFloat(online.total_price);
               });
 
               net = worksheet.addRow([
@@ -369,9 +373,9 @@ exports.exportReport = (req, res) => {
                   productRow1 = worksheet2.addRow({
                     product_name: row.product_name,
                     start_quantity: row.starting,
-                    restock: parseInt(row.restock),
-                    damaged: parseInt(row.damaged),
-                    releasing: parseInt(row.releasing),
+                    restock: parseFloat(row.restock),
+                    damaged: parseFloat(row.damaged),
+                    releasing: parseFloat(row.releasing),
                     end_quantity: row.ending,
                   });
 
@@ -386,7 +390,7 @@ exports.exportReport = (req, res) => {
                 worksheet2.addRow([""]);
 
                 testonly = worksheet2.addRow([
-                  "BOXES",
+                  "PACKAGING",
                   "STARTING",
                   "RESTOCKED",
                   "DAMAGED",
@@ -412,9 +416,9 @@ exports.exportReport = (req, res) => {
                     productRow2 = worksheet2.addRow({
                       product_name: row.name,
                       start_quantity: row.start_quantity,
-                      restock: parseInt(row.restock),
-                      damaged: parseInt(row.damaged),
-                      releasing: parseInt(row.releasing),
+                      restock: parseFloat(row.restock),
+                      damaged: parseFloat(row.damaged),
+                      releasing: parseFloat(row.releasing),
                       end_quantity: row.end_quantity,
                     });
 
