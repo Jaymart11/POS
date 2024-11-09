@@ -213,6 +213,7 @@ const CreateProductModal = ({
                         },
                       ]}
                       noStyle
+                      label="Conversion ratio"
                     >
                       <InputNumber step="0.1" style={{ width: "100%" }} />
                     </Form.Item>
