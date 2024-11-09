@@ -205,6 +205,7 @@ const CreateProductModal = ({
                       />
                     </Form.Item>
                     <Form.Item
+                      label="Conversion ratio"
                       {...field}
                       name={[name, "conversion_ratio"]}
                       rules={[
@@ -213,7 +214,6 @@ const CreateProductModal = ({
                         },
                       ]}
                       noStyle
-                      label="Conversion ratio"
                     >
                       <InputNumber step="0.1" style={{ width: "100%" }} />
                     </Form.Item>
