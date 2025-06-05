@@ -23,20 +23,20 @@ app.use(cors());
 // cron
 app.get("/log-quantities/start", (req, res) => {
   packagingScheduler.logQuantities(true);
-  res.send("Start quantities logged manually.");
+  res.send("Start packaging quantities logged manually.");
 });
 app.get("/log-quantities/end", (req, res) => {
   packagingScheduler.logQuantities(false);
-  res.send("End quantities logged manually.");
+  res.send("End packaging quantities logged manually.");
 });
 
 app.get("/product-log-quantities/start", (req, res) => {
   productScheduler.productLogQuantities(true);
-  res.send("Start quantities logged manually.");
+  res.send("Start product quantities logged manually.");
 });
 app.get("/product-log-quantities/end", (req, res) => {
   productScheduler.productLogQuantities(false);
-  res.send("End quantities logged manually.");
+  res.send("End product quantities logged manually.");
 });
 
 // Example home route
