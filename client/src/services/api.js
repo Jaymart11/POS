@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://tryusisig.store"; // Replace with your API URL
+const API_URL = "http://13.250.108.119:3002"; // Replace with your API URL
 
 const apiClient = axios.create({
   baseURL: API_URL,
