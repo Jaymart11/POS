@@ -40,7 +40,10 @@ export const downloadReport = async (data) => {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `order.xlsx`);
+    link.setAttribute(
+      "download",
+      `Reports_from_${data.date[0]}_to_${data.date[1]}.xlsx`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
