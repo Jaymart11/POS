@@ -294,6 +294,28 @@ class ProductModel {
     );
   }
 
+  updateOrderNumber(productData, callback) {
+    const quantityUpdates = productData.map((item) => {
+      return new Promise((resolve, reject) => {
+        db.query(
+          "UPDATE product SET order_num = ? WHERE id = ?",
+          [item.order_num, item.id],
+          (err, result) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(result);
+          }
+        );
+      });
+    });
+
+    // Wait for all updates to finish
+    Promise.all(quantityUpdates)
+      .then((results) => callback(null, results))
+      .catch((err) => callback(err));
+  }
+
   deleteProduct(productId, productData, callback) {
     db.query(
       "UPDATE product SET ? WHERE id = ?",
